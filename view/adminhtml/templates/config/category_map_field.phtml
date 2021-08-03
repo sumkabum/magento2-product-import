@@ -1,0 +1,119 @@
+<?php
+use Sumkabum\Magento2ProductImport\Block\System\Config\Form\CategoryMapField;
+/** @var $block CategoryMapField */
+?>
+<div id="import-source-categories-button">
+    <button v-on:click.prevent="redirectToImport">{{ buttonMessage }}</button>
+</div>
+<div id="category-map">
+    <table>
+        <tr>
+            <td>Source Category</td>
+            <td>Magento Category</td>
+            <td></td>
+        </tr>
+        <tr v-for="(row, index) in rows" v-bind:key="row.id" class="mapping-row">
+            <td><categories-select-source v-bind:selected="row.source_category_id" v-on:change="row.source_category_id = $event.target.value"></categories-select-source></td>
+            <td><categories-select-magento v-bind:selected="row.magento_category_id" v-on:change="row.magento_category_id = $event.target.value"></categories-select-magento></td>
+            <td>
+                <button v-on:click="deleteRow($event, row)" class="delete-row">delete</button>
+            </td>
+        </tr>
+        <tr>
+            <td></td>
+            <td></td>
+            <td>
+                <button v-on:click="addRow" class="add-row">add</button>
+            </td>
+        </tr>
+    </table>
+    <input type="hidden" v-bind:value="rowsJson" name="<?php echo $block->getElement()->getName() ?>">
+</div>
+
+<script>
+    require([
+        'vue',
+        'jquery'
+    ], function(Vue, $) {
+        'use strict';
+
+        $(document).ready(function (){
+            $('#category-map').closest('tr').find('td.label').remove();
+            $('[id$=_category_map_map] td.value').css('width', '100%');
+        })
+
+        let sourceCategories = <?php echo json_encode($block->getSourceCategoriesOptionsArray()); ?>;
+        let magentoCategories = <?php echo json_encode($block->getMagentoCategoryOptionsArray()); ?>;
+        let categoryMap = <?php echo !empty($block->getElement()->getData('value')) ? $block->getElement()->getData('value') : '[]'; ?>
+
+
+        new Vue({
+            el: '#import-source-categories-button',
+            data: {
+                url: '<?php echo $block->getImportSourceCategoriesUrl() ?>',
+                buttonMessage: '<?php echo $block->getImportSourceCategoriesName() ?>'
+            },
+            methods: {
+                redirectToImport: function() {
+                    this.buttonMessage = 'Importing ...'
+                    location.href = this.url;
+                }
+            }
+        })
+
+        Vue.component('categories-select-source', {
+            props: ['selected'],
+            data: function () {
+                return {
+                    sourceCategories: sourceCategories
+                }
+            },
+            template: '<select v-bind:value="selected" v-on:change="$emit(\'change\', $event)"><option v-for="category in this.sourceCategories" v-bind:value="category.id">{{category.name}}</option></select>'
+        });
+
+        Vue.component('categories-select-magento', {
+            props: ['selected'],
+            data: function () {
+                return {
+                    magentoCategories: magentoCategories
+                }
+            },
+            template: '<select v-bind:value="selected" v-on:change="$emit(\'change\', $event)"><option v-for="category in this.magentoCategories" v-bind:value="category.id">{{category.name}}</option></select>'
+        });
+
+        new Vue({
+            el: '#category-map',
+            data: {
+                rows: categoryMap,
+            },
+            computed: {
+                rowsJson: function () {
+                    return JSON.stringify(this.rows);
+                }
+            },
+            methods: {
+                addRow: function (event) {
+                    event.preventDefault();
+                    this.rows.push({
+                        id: this.getNewRowId(),
+                        source_category_id: null,
+                        magento_category_id: null
+                    });
+                },
+                deleteRow: function(event, row) {
+                    event.preventDefault()
+                    this.rows.splice(this.rows.indexOf(row), 1)
+                },
+                getNewRowId: function () {
+                    let greatestId = 0;
+                    this.rows.forEach(function (value, index, array) {
+                        if (value.id > greatestId) {
+                            greatestId = value.id
+                        }
+                    })
+                    return ++greatestId;
+                }
+            }
+        })
+    })
+</script>

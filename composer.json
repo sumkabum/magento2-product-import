@@ -1,0 +1,10 @@
+{
+    "name": "sumkabum/magento2-product-import",
+    "authors": [
+        {
+            "name": "sumkabum",
+            "email": "sumkabum@gmail.com"
+        }
+    ],
+    "require": {}
+}

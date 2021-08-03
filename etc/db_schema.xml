@@ -1,0 +1,32 @@
+<?xml version="1.0"?>
+<schema xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:framework:Setup/Declaration/Schema/etc/schema.xsd">
+    <table name="importer_source_category">
+        <column name="entity_id" xsi:type="int" identity="true" unsigned="true" comment="Entity Id"/>
+        <column name="source_code" xsi:type="varchar" length="255" nullable="false" comment="Source Code"/>
+        <column name="parent_category_id" xsi:type="varchar" length="255" comment="Category Id"/>
+        <column name="category_id" xsi:type="varchar" length="255" comment="Category Id"/>
+        <column name="category_name" xsi:type="varchar" length="255" comment="Category Name"/>
+        <column name="updated_at" xsi:type="timestamp" nullable="true" comment="Updated At"/>
+        <column name="created_at" xsi:type="timestamp" nullable="false" comment="Created At"/>
+        <constraint xsi:type="primary" referenceId="PRIMARY">
+            <column name="entity_id"/>
+        </constraint>
+        <constraint xsi:type="unique" referenceId="UNQ_IMPORTER_SOURCE_CATEGORY_SOURCE_CODE_CATEGORY_ID">
+            <column name="source_code"/>
+            <column name="category_id"/>
+        </constraint>
+        <index referenceId="IDX_IMPORTER_SOURCE_CATEGORY_SOURCE_CODE" indexType="btree">
+            <column name="source_code"/>
+        </index>
+        <index referenceId="IDX_IMPORTER_SOURCE_CATEGORY_PARENT_CATEGORY_ID" indexType="btree">
+            <column name="parent_category_id"/>
+        </index>
+        <index referenceId="IDX_IMPORTER_SOURCE_CATEGORY_CATEGORY_ID" indexType="btree">
+            <column name="category_id"/>
+        </index>
+        <index referenceId="IDX_IMPORTER_SOURCE_CATEGORY_CATEGORY_NAME" indexType="btree">
+            <column name="category_name"/>
+        </index>
+    </table>
+</schema>
