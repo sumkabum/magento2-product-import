@@ -6,5 +6,9 @@
             "email": "sumkabum@gmail.com"
         }
     ],
-    "require": {}
+    "require": {},
+    "autoload": {
+        "psr-4": { "Sumkabum\\Magento2ProductImport\\": "" },
+        "files": [ "registration.php" ]
+    }
 }
