@@ -15,6 +15,7 @@ use Magento\Framework\Exception\InputException;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\StateException;
 use Magento\Store\Model\App\Emulation;
+use Sumkabum\Magento2ProductImport\Service\Image;
 use Sumkabum\Magento2ProductImport\Service\Report;
 use Psr\Log\LoggerInterface;
 
@@ -117,7 +118,7 @@ class ProductImage
 
     /**
      * @param \Magento\Catalog\Model\Product $product
-     * @param string[] $imageUrls
+     * @param Image[] $images
      * @return ProductInterface|\Magento\Catalog\Model\Product
      * @throws CouldNotSaveException
      * @throws FileSystemException
@@ -126,7 +127,7 @@ class ProductImage
      * @throws StateException
      * @throws Exception
      */
-    public function updateImages(\Magento\Catalog\Model\Product $product, array $imageUrls)
+    public function updateImages(\Magento\Catalog\Model\Product $product, array $images)
     {
         $this->emulation->startEnvironmentEmulation(0, 'adminhtml');
 
@@ -134,16 +135,16 @@ class ProductImage
 
         $existingImages = $product->getMediaGalleryEntries();
 
-        /** @var string[] $imageUrlsToAdd */
-        $imageUrlsToAdd = [];
+        /** @var Image[] $imagesToAdd */
+        $imagesToAdd = [];
         /** @var Entry[] $imagesToDelete */
         $imagesToDelete = [];
 
         // Get images to delete
         foreach ($existingImages as $existingImageKey => $existingImage) {
             $needsDelete = true;
-            foreach ($imageUrls as $imageUrl) {
-                if ($this->areTheFilenamesSame($existingImage->getFile(), $this->getFilenameFromUrl($imageUrl)) && file_exists($this->getCatalogProductImageFullPath($existingImage->getFile()))) {
+            foreach ($images as $image) {
+                if ($this->areTheFilenamesSame($existingImage->getFile(), $this->getFilenameFromUrl($image->getUrl())) && file_exists($this->getCatalogProductImageFullPath($existingImage->getFile()))) {
                     $needsDelete = false;
                     break;
                 }
@@ -156,16 +157,16 @@ class ProductImage
         }
 
         // Get images to add
-        foreach ($imageUrls as $imageUrl) {
+        foreach ($images as $image) {
             $imageAlreadyExists = false;
             foreach ($existingImages as $existingImage) {
-                if ($this->areTheFilenamesSame($existingImage->getFile(), $this->getFilenameFromUrl($imageUrl))) {
+                if ($this->areTheFilenamesSame($existingImage->getFile(), $this->getFilenameFromUrl($image->getUrl()))) {
                     $imageAlreadyExists = true;
                     break;
                 }
             }
             if (!$imageAlreadyExists) {
-                $imageUrlsToAdd[] = $imageUrl;
+                $imagesToAdd[] = $image;
             }
         }
 
@@ -182,20 +183,20 @@ class ProductImage
         }
 
         // add images
-        foreach ($imageUrlsToAdd as $imageUrlToAdd) {
+        foreach ($imagesToAdd as $imageToAdd) {
 
-            $imageLocalFullPath = $this->getImagesLocalDirPath() . $this->getFilenameFromUrl($imageUrlToAdd);
+            $imageLocalFullPath = $this->getImagesLocalDirPath() . $this->getFilenameFromUrl($imageToAdd->getUrl());
 
-            $this->download($imageUrlToAdd, $imageLocalFullPath);
+            $this->download($imageToAdd->getUrl(), $imageLocalFullPath, $imageToAdd->getUsername(), $imageToAdd->getPassword());
 
             if (!$this->isValid($imageLocalFullPath)) {
-                $this->logger->info($product->getSku() . ' Invalid image. Url: ' . $imageUrlToAdd);
+                $this->logger->info($product->getSku() . ' Invalid image. Url: ' . $imageToAdd->getUrl());
                 continue;
             }
 
             try {
                 $product->addImageToMediaGallery($imageLocalFullPath, null, true, false);
-                $this->logger->info($product->getSku() . ' adding image: ' . $imageUrlToAdd);
+                $this->logger->info($product->getSku() . ' adding image: ' . $imageToAdd->getUrl());
                 $this->report->increaseByNumber($this->report::KEY_IMAGES_ADDED);
 
             } catch (Exception $e) {
@@ -204,13 +205,13 @@ class ProductImage
             }
         }
 
-        if (!empty($imageUrlsToAdd)) {
+        if (!empty($imagesToAdd)) {
             $product = $this->productRepository->save($product);
         }
 
-        if (!empty($imageUrlsToAdd) || !empty($imagesToDelete) || $this->someThumbnailsMissing($product) && (count($imageUrls) > 0)) {
-            $this->updateThumbnails($product, reset($imageUrls));
-            $this->updateImagesPositions($product, $imageUrls);
+        if (!empty($imagesToAdd) || !empty($imagesToDelete) || $this->someThumbnailsMissing($product) && (count($images) > 0)) {
+            $this->updateThumbnails($product, reset($images));
+            $this->updateImagesPositions($product, $images);
             $product = $this->productRepository->save($product);
         }
 
@@ -231,7 +232,8 @@ class ProductImage
     protected function areTheFilenamesSame($magentoFilename, $sourceFilename): bool
     {
         try {
-
+            $sourceFilename = str_replace('.jpeg', '.jpg', $sourceFilename);
+            $magentoFilename = str_replace('.jpeg', '.jpg', $magentoFilename);
             $sourceFilePathInfo = pathinfo($sourceFilename);
 
             $magentoFilename = $this->replaceLastMatch('/' . $sourceFilePathInfo['filename'], '/', $magentoFilename);
@@ -248,10 +250,10 @@ class ProductImage
 
     /**
      * @param \Magento\Catalog\Model\Product $product
-     * @param string $imageUrl
+     * @param Image $image
      * @throws LocalizedException
      */
-    public function updateThumbnails(\Magento\Catalog\Model\Product $product, string $imageUrl)
+    public function updateThumbnails(\Magento\Catalog\Model\Product $product, Image $image)
     {
         $this->galleryReadHandler->execute($product);
         $mediaGalleryEntries = $product->getMediaGalleryEntries();
@@ -259,7 +261,7 @@ class ProductImage
         $thumbnailImageName = '';
 
         foreach ($mediaGalleryEntries as $existingImage) {
-            if ($this->areTheFilenamesSame($existingImage->getFile(), $this->getFilenameFromUrl($imageUrl))) {
+            if ($this->areTheFilenamesSame($existingImage->getFile(), $this->getFilenameFromUrl($image->getUrl()))) {
                 $thumbnailImageName = $existingImage->getFile();
                 break;
             }
@@ -272,17 +274,17 @@ class ProductImage
 
     /**
      * @param \Magento\Catalog\Model\Product $product
-     * @param string[] $imageUrls
+     * @param Image[] $images
      * @throws LocalizedException
      */
-    public function updateImagesPositions(\Magento\Catalog\Model\Product $product, array $imageUrls)
+    public function updateImagesPositions(\Magento\Catalog\Model\Product $product, array $images)
     {
         $this->galleryReadHandler->execute($product);
 
         $mediaGalleryEntries = $product->getMediaGalleryEntries();
         foreach ($mediaGalleryEntries as $existingImage) {
-            foreach ($imageUrls as $position => $imageUrl) {
-                if ($this->areTheFilenamesSame($existingImage->getFile(), $this->getFilenameFromUrl($imageUrl))) {
+            foreach ($images as $position => $image) {
+                if ($this->areTheFilenamesSame($existingImage->getFile(), $this->getFilenameFromUrl($image->getUrl()))) {
                     $this->imageProcessor->updateImage($product, $existingImage->getFile(), ['position' => $position]);
                     break;
                 }
@@ -336,9 +338,11 @@ class ProductImage
     /**
      * @param string $imageUrl
      * @param string $localFullPath
+     * @param string|null $username
+     * @param string|null $password
      * @throws Exception
      */
-    public function download(string $imageUrl, string $localFullPath)
+    public function download(string $imageUrl, string $localFullPath, ?string $username = null, ?string $password = null)
     {
         $fh = fopen($localFullPath, 'w');
 
@@ -353,6 +357,9 @@ class ProductImage
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
         curl_setopt($ch, CURLOPT_HEADER, 0);
+        if (!empty($username)) {
+            curl_setopt($ch, CURLOPT_USERPWD, "$username:$password");
+        }
 
         curl_exec($ch);
 

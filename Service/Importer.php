@@ -128,7 +128,7 @@ class Importer
             try {
                 $simpleProduct = $this->productService->save($notConfigurableDataRow->mappedDataFields, $doNotUpdateFields);
                 $this->report->increaseByNumber($this->report::KEY_PRODUCTS_UPDATED);
-                $this->productImageService->updateImages($simpleProduct, $notConfigurableDataRow->imageUrls);
+                $this->productImageService->updateImages($simpleProduct, $notConfigurableDataRow->images);
             } catch (\Exception $e) {
                 $this->logger->error($notConfigurableDataRow->mappedDataFields['sku'] . ' Failed to save! ' . $e->getMessage() . $e->getTraceAsString());
                 $this->report->addMessage($this->report::KEY_ERRORS, $notConfigurableDataRow->mappedDataFields['sku'] . ' ' . $e->getMessage());

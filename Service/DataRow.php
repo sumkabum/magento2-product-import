@@ -3,8 +3,18 @@ namespace Sumkabum\Magento2ProductImport\Service;
 
 class DataRow
 {
+    /**
+     * @var array
+     */
     public $mappedDataFields = [];
-    public $imageUrls = [];
-    public $qty;
+
+    /**
+     * @var Image[]
+     */
+    public $images = [];
+
+    /**
+     * @var string
+     */
     public $parentSku;
 }
