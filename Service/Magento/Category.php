@@ -11,6 +11,21 @@ use Magento\Framework\Exception\CouldNotSaveException;
 class Category
 {
     private $cacheCategory = [];
+
+    /**
+     * @throws CouldNotSaveException
+     */
+    public function getOrCreateCategoryIdsByCategoryNamesPaths(array $categoryNamesPaths): array
+    {
+        $magentoCategoryIds = [];
+        foreach ($categoryNamesPaths as $categoryNamesPath) {
+            foreach ($this->getOrCreateCategoryIds($categoryNamesPath) as $categoryId) {
+                $magentoCategoryIds[$categoryId] = $categoryId;
+            }
+        }
+        return $magentoCategoryIds;
+    }
+
     /**
      * @throws CouldNotSaveException
      */

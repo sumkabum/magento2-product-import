@@ -10,5 +10,6 @@
     "autoload": {
         "psr-4": { "Sumkabum\\Magento2ProductImport\\": "" },
         "files": [ "registration.php" ]
-    }
+    },
+    "type": "magento2-module"
 }

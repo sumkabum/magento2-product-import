@@ -128,4 +128,43 @@ class SourceCategoryService
             $this->getNamesPath($parent, $sourceCategoryCollection, $path);
         }
     }
+
+    public function getSourceCategoryIds(array $sourceCategoriesDataRows): array
+    {
+        $ids = [];
+        foreach ($sourceCategoriesDataRows as $row) {
+            $ids[] = $row['category_id'];
+        }
+        return $ids;
+    }
+
+    public function getNamesPathsArrayByCategoryDataRows(array $sourceCategoryDataRows): array
+    {
+        $categoryPaths = [];
+        foreach ($sourceCategoryDataRows as $dataRow) {
+            $path = [];
+            $this->getNamesPathByCategoryDataRows($dataRow, $sourceCategoryDataRows, $path);
+            $categoryPaths[] = $path;
+        }
+        return $categoryPaths;
+    }
+
+    public function getNamesPathByCategoryDataRows($categoryDataRow, array $sourceCategoryDataRows, array &$path)
+    {
+        array_unshift($path, $categoryDataRow['category_name']);
+        $parent = $this->getCategoryDataRowByCategoryId($categoryDataRow['parent_category_id'], $sourceCategoryDataRows);
+        if ($parent) {
+            $this->getNamesPathByCategoryDataRows($parent, $sourceCategoryDataRows, $path);
+        }
+    }
+
+    public function getCategoryDataRowByCategoryId($categoryId, array $sourceCategoryDataRows): ?array
+    {
+        foreach ($sourceCategoryDataRows as $categoryDataRow) {
+            if ($categoryId == $categoryDataRow['category_id']) {
+                return $categoryDataRow;
+            }
+        }
+        return null;
+    }
 }

@@ -5,10 +5,30 @@ use Magento\Catalog\Model\ResourceModel\Category\Collection;
 use Magento\Framework\App\ObjectManager;
 use Magento\Catalog\Model\Category;
 use Magento\Framework\UrlInterface;
+use Sumkabum\Magento2ProductImport\Model\SourceCategory;
+use Sumkabum\Magento2ProductImport\Service\SourceCategoryService;
 
 class CategoryMapField extends \Magento\Config\Block\System\Config\Form\Field
 {
     protected $_template = 'Sumkabum_Magento2ProductImport::config/category_map_field.phtml';
+
+    protected $sourceCode = null;
+
+    protected $magentoRootCategoryId = 2;
+
+    /**
+     * @var SourceCategoryService
+     */
+    private $sourceCategoryService;
+
+    public function __construct(
+        \Magento\Backend\Block\Template\Context $context,
+        SourceCategoryService $sourceCategoryService,
+        array $data = []
+    ) {
+        parent::__construct($context, $data);
+        $this->sourceCategoryService = $sourceCategoryService;
+    }
 
     /**
      * @return \Magento\Framework\Data\Form\Element\AbstractElement
@@ -32,7 +52,7 @@ class CategoryMapField extends \Magento\Config\Block\System\Config\Form\Field
         $categoryCollection = ObjectManager::getInstance()->create(Collection::class);
         $categoryCollection
             ->addAttributeToSelect('*')
-            ->addFieldToFilter('name', 'Default Category')
+            ->addFieldToFilter('entity_id', $this->magentoRootCategoryId)
             ->addOrder('entity_id', 'asc')
             ->load();
 
@@ -75,16 +95,19 @@ class CategoryMapField extends \Magento\Config\Block\System\Config\Form\Field
     public function getSourceCategoriesOptionsArray(): array
     {
         $optionsArray = [];
-        $optionsArray[] = [
-            'id' => 1,
-            'name' => 'Name 1',
-        ];
-        $optionsArray[] = [
-            'id' => 2,
-            'name' => 'Name 2',
-        ];
 
-        return $optionsArray;
+        $collection = $this->sourceCategoryService->getSourceCategoryCollection(\Magentopood\Common\Service\Config::SOURCE_CODE);
+        /** @var SourceCategory[] $sourceCategoryItems */
+        $sourceCategoryItems = $collection->getItems();
+
+        foreach ($sourceCategoryItems as $sourceCategory) {
+            $optionsArray[] = [
+                'id' => $sourceCategory->getData(SourceCategory::FIELD_CATEGORY_ID),
+                'name' => $this->sourceCategoryService->getNamesPathAsString($sourceCategory, $collection),
+            ];
+        }
+
+        return $this->sortOptionsByNameAsc($optionsArray);
     }
 
     protected function sortOptionsByNameAsc($optionsArray)
