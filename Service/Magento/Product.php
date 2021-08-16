@@ -317,12 +317,12 @@ class Product
      * @throws InputException
      * @throws StateException
      */
-    public function disableProductsThatAreNotInList(string $sourceCode, array $skuList)
+    public function disableProductsThatAreNotInList(string $sourceCode, array $skuList, $sourceCodeFieldName = 'source_code')
     {
         $limit = 100;
         $currentPage = 1;
 
-        $importedProducts = $this->getProductsBySourceCode($sourceCode, $limit, $currentPage);
+        $importedProducts = $this->getProductsBySourceCode($sourceCode, $limit, $currentPage, $sourceCodeFieldName);
         while (count($importedProducts->getItems()) > 0) {
             $this->logger->info('Checking old products. Progress: ' . $limit * $currentPage);
             foreach ($importedProducts->getItems() as $product) {
@@ -337,16 +337,16 @@ class Product
                 }
             }
             $currentPage++;
-            $importedProducts = $this->getProductsBySourceCode($sourceCode, $limit, $currentPage);
+            $importedProducts = $this->getProductsBySourceCode($sourceCode, $limit, $currentPage, $sourceCodeFieldName);
         }
     }
 
-    public function getProductsBySourceCode(string $sourceCode, int $limit, int $currentPage = 1): \Magento\Catalog\Api\Data\ProductSearchResultsInterface
+    public function getProductsBySourceCode(string $sourceCode, int $limit, int $currentPage = 1, $sourceCodeFieldName = 'source_code'): \Magento\Catalog\Api\Data\ProductSearchResultsInterface
     {
         $this->setAreaCode();
 
         $searchCriteria = $this->searchCriteriaBuilder
-            ->addFilter('source_code', $sourceCode)
+            ->addFilter($sourceCodeFieldName, $sourceCode)
             ->setCurrentPage($currentPage)
             ->setPageSize($limit)
             ->create();
