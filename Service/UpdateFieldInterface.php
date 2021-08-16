@@ -5,5 +5,5 @@ use Magento\Catalog\Model\Product;
 
 interface UpdateFieldInterface
 {
-    public function getNewValue(Product $product, $sourceValue);
+    public function getNewValue(Product $product);
 }

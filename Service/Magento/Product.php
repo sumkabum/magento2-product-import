@@ -137,7 +137,7 @@ class Product
 
         foreach ($productData as $fieldName => $fieldValue) {
             if ($fieldValue instanceof UpdateFieldInterface) {
-                $productData[$fieldName] = $fieldValue->getNewValue($product, $fieldValue);
+                $productData[$fieldName] = $fieldValue->getNewValue($product);
             }
         }
 
@@ -163,7 +163,7 @@ class Product
 
         foreach ($productData as $productFieldName => $productFieldValue) {
             if ($productFieldValue instanceof UpdateFieldInterface) {
-                $productData[$productFieldName] = $productFieldValue->getNewValue($product, $productData);
+                $productData[$productFieldName] = $productFieldValue->getNewValue($product);
             }
         }
 
