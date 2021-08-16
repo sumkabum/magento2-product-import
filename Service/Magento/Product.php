@@ -16,8 +16,8 @@ use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Exception\StateException;
 use Magento\Framework\ObjectManagerInterface;
 use Magento\Store\Model\StoreManagerInterface;
-use Magentopood\IntegrationBase\Service\Report;
 use Psr\Log\LoggerInterface;
+use Sumkabum\Magento2ProductImport\Service\UpdateFieldInterface;
 
 class Product
 {
@@ -135,6 +135,12 @@ class Product
         $this->setAreaCode();
         $product = $this->getProduct($productData['sku']);
 
+        foreach ($productData as $fieldName => $fieldValue) {
+            if ($fieldValue instanceof UpdateFieldInterface) {
+                $productData[$fieldName] = $fieldValue->getNewValue($product, $fieldValue);
+            }
+        }
+
         if (isset($productData['url_key'])) {
             $productData['url_key'] = $this->urlKeyService->generateUrlKey($productData['url_key']);
         }
@@ -152,6 +158,12 @@ class Product
         if (!$this->isNewProduct($product)) {
             foreach ($doNotUpdateFields as $doNotUpdateField) {
                 unset($productData[$doNotUpdateField]);
+            }
+        }
+
+        foreach ($productData as $productFieldName => $productFieldValue) {
+            if ($productFieldValue instanceof UpdateFieldInterface) {
+                $productData[$productFieldName] = $productFieldValue->getNewValue($product, $productData);
             }
         }
 
@@ -367,5 +379,10 @@ class Product
         foreach ($indexers as $indexer) {
             $indexer->invalidate();
         }
+    }
+
+    public function isNewJustCreatedProduct(\Magento\Catalog\Model\Product $product): bool
+    {
+        return $product->getUpdatedAt() == $product->getCreatedAt();
     }
 }

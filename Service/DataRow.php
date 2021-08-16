@@ -4,7 +4,7 @@ namespace Sumkabum\Magento2ProductImport\Service;
 class DataRow
 {
     /**
-     * @var array
+     * @var array|UpdateFieldInterface[]
      */
     public $mappedDataFields = [];
 
@@ -12,6 +12,11 @@ class DataRow
      * @var Image[]
      */
     public $images = [];
+
+    /**
+     * @var bool
+     */
+    public $catUpdateImagesIfProductExists = false;
 
     /**
      * @var string

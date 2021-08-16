@@ -89,13 +89,13 @@ class Importer
         $i = 0;
         foreach ($configurableDataRows as $configurableDataRow) {
             $i++;
-            if ($i % 2 == 0) {
+            if ($i % 10 == 0) {
                 $this->logger->info('progress configurable: ' . $i . ' of ' . $count);
             }
 
             try {
                 $configurableProduct = $this->productService->save($configurableDataRow->mappedDataFields, $doNotUpdateFields);
-                $configurableProduct = $this->productImageService->updateImages($configurableProduct, $configurableDataRow->imageUrls);
+                $configurableProduct = $this->updateImages($configurableProduct, $configurableDataRow);
 
                 $simpleProductDataRows = $this->getSimpleProductsForConfigurable($configurableDataRow->mappedDataFields['sku'], $dataRows);
 
@@ -104,7 +104,7 @@ class Importer
                     $simpleProduct = $this->productService->save($simpleProductDataRow->mappedDataFields, $doNotUpdateFields);
                     $this->report->increaseByNumber($this->report::KEY_PRODUCTS_UPDATED);
 
-                    $simpleProduct = $this->productImageService->updateImages($simpleProduct, $simpleProductDataRow->imageUrls);
+                    $simpleProduct = $this->updateImages($simpleProduct, $simpleProductDataRow);
                     $simpleProducts[] = $simpleProduct;
                 }
 
@@ -121,19 +121,34 @@ class Importer
         $i = 0;
         foreach ($notConfigurableDataRows as $notConfigurableDataRow) {
             $i++;
-            if ($i % 2 == 0) {
+            if ($i % 10 == 0) {
                 $this->logger->info('progress non-configurable: ' . $i . ' of ' . $count);
             }
 
             try {
                 $simpleProduct = $this->productService->save($notConfigurableDataRow->mappedDataFields, $doNotUpdateFields);
                 $this->report->increaseByNumber($this->report::KEY_PRODUCTS_UPDATED);
-                $this->productImageService->updateImages($simpleProduct, $notConfigurableDataRow->images);
+                $this->updateImages($simpleProduct, $notConfigurableDataRow);
             } catch (\Exception $e) {
                 $this->logger->error($notConfigurableDataRow->mappedDataFields['sku'] . ' Failed to save! ' . $e->getMessage() . $e->getTraceAsString());
                 $this->report->addMessage($this->report::KEY_ERRORS, $notConfigurableDataRow->mappedDataFields['sku'] . ' ' . $e->getMessage());
             }
         }
+    }
+
+    /**
+     * @throws \Magento\Framework\Exception\CouldNotSaveException
+     * @throws \Magento\Framework\Exception\StateException
+     * @throws \Magento\Framework\Exception\FileSystemException
+     * @throws \Magento\Framework\Exception\InputException
+     * @throws \Magento\Framework\Exception\LocalizedException
+     */
+    public function updateImages(Product $product, DataRow $dataRow): Product
+    {
+        if ($this->productService->isNewProduct($product) || $dataRow->catUpdateImagesIfProductExists) {
+            $product = $this->productImageService->updateImages($product, $dataRow->images);
+        }
+        return $product;
     }
 
     /**
@@ -187,9 +202,9 @@ class Importer
                     continue;
                 }
 
-                if (!count($configurableDataRow->imageUrls)) {
-                    foreach ($dataRow->imageUrls as $dataRowImageUrl) {
-                        $configurableDataRow->imageUrls[] = $dataRowImageUrl;
+                if (!count($configurableDataRow->images)) {
+                    foreach ($dataRow->images as $dataRowImage) {
+                        $configurableDataRow->images[] = $dataRowImage;
                     }
                 }
 
