@@ -231,21 +231,17 @@ class ProductImage
 
     protected function areTheFilenamesSame($magentoFilename, $sourceFilename): bool
     {
-        try {
-            $sourceFilename = str_replace('.jpeg', '.jpg', $sourceFilename);
-            $magentoFilename = str_replace('.jpeg', '.jpg', $magentoFilename);
-            $sourceFilePathInfo = pathinfo($sourceFilename);
+        $sourceFilename = str_replace('.jpeg', '.jpg', $sourceFilename);
+        $magentoFilename = str_replace('.jpeg', '.jpg', $magentoFilename);
+        $sourceFilePathInfo = pathinfo($sourceFilename);
 
-            $magentoFilename = $this->replaceLastMatch('/' . $sourceFilePathInfo['filename'], '/', $magentoFilename);
-            $magentoFilename = str_replace('.' . strtolower($sourceFilePathInfo['extension']), '', $magentoFilename);
+        $magentoFilename = $this->replaceLastMatch('/' . $sourceFilePathInfo['filename'], '/', $magentoFilename);
+        $magentoFilename = str_replace('.' . strtolower($sourceFilePathInfo['extension']), '', $magentoFilename);
 
-            $magentoFilename = preg_replace('/(_\d+)+/', '', $magentoFilename);
-            $magentoFilename = preg_replace('/\/.\/.\//', '', $magentoFilename);
+        $magentoFilename = preg_replace('/(_\d+)+/', '', $magentoFilename);
+        $magentoFilename = preg_replace('/\/.\/.\//', '', $magentoFilename);
 
-            return $magentoFilename === '';
-        } catch (\Throwable $t) {
-            $t=0;
-        }
+        return $magentoFilename === '';
     }
 
     /**
