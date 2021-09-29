@@ -370,6 +370,7 @@ class ProductImage
     {
         preg_match('/[^\/]+$/', $url, $matches);
         $filename = $matches[0];
+        $filename = strtolower($filename);
         $filename = preg_replace('/[^A-Za-z0-9\.\_]/', '_', $filename);
         $pathInfo = pathinfo($filename);
         return str_replace('.', '', $pathInfo['filename']) . '.' . $pathInfo['extension'];
