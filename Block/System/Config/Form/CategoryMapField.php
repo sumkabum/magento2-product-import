@@ -96,7 +96,7 @@ class CategoryMapField extends \Magento\Config\Block\System\Config\Form\Field
     {
         $optionsArray = [];
 
-        $collection = $this->sourceCategoryService->getSourceCategoryCollection(\Magentopood\Common\Service\Config::SOURCE_CODE);
+        $collection = $this->sourceCategoryService->getSourceCategoryCollection($this->sourceCode);
         /** @var SourceCategory[] $sourceCategoryItems */
         $sourceCategoryItems = $collection->getItems();
 
