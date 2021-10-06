@@ -20,6 +20,10 @@ class SourceCategoryService
      */
     private $objectManager;
 
+    private $souceCategoryCollectionCache;
+
+    private $souceCategoriesCache;
+
     public function __construct(
         LoggerInterface $logger,
         ObjectManagerInterface $objectManager
@@ -87,10 +91,24 @@ class SourceCategoryService
 
     public function getSourceCategoryCollection(string $sourceCode): \Sumkabum\Magento2ProductImport\Model\ResourceModel\SourceCategory\Collection
     {
-        /** @var \Sumkabum\Magento2ProductImport\Model\ResourceModel\SourceCategory\Collection $collection */
-        $collection = $this->objectManager->create(\Sumkabum\Magento2ProductImport\Model\ResourceModel\SourceCategory\Collection::class);
-        $collection->addFieldToFilter('source_code', $sourceCode);
-        return $collection;
+        if (!isset($this->souceCategoryCollectionCache[$sourceCode])) {
+            /** @var \Sumkabum\Magento2ProductImport\Model\ResourceModel\SourceCategory\Collection $collection */
+            $collection = $this->objectManager->create(\Sumkabum\Magento2ProductImport\Model\ResourceModel\SourceCategory\Collection::class);
+            $collection->addFieldToFilter('source_code', $sourceCode);
+            $this->souceCategoryCollectionCache[$sourceCode] = $collection;
+        }
+        return $this->souceCategoryCollectionCache[$sourceCode];
+    }
+
+    public function getSourceCategory($categoryId, string $sourceCode): ?SourceCategory
+    {
+        if (!isset($this->souceCategoriesCache[$sourceCode])) {
+            $this->souceCategoriesCache[$sourceCode] = [];
+            foreach ($this->getSourceCategoryCollection($sourceCode) as $sourceCategory) {
+                $this->souceCategoriesCache[$sourceCode][$sourceCategory->getData(SourceCategory::FIELD_CATEGORY_ID)] = $sourceCategory;
+            }
+        }
+        return $this->souceCategoriesCache[$sourceCode][$categoryId] ?? null;
     }
 
     /**
@@ -115,18 +133,18 @@ class SourceCategoryService
 
     public function getNamesPathAsString(SourceCategory $sourceCategory, \Sumkabum\Magento2ProductImport\Model\ResourceModel\SourceCategory\Collection $sourceCategoryCollection, string $separator = ' / '): string
     {
-        $path = [];
-        $this->getNamesPath($sourceCategory, $sourceCategoryCollection, $path);
+        $path = $this->getNamesPath($sourceCategory, $sourceCategoryCollection);
         return implode($separator, $path);
     }
 
-    public function getNamesPath(SourceCategory $sourceCategory, \Sumkabum\Magento2ProductImport\Model\ResourceModel\SourceCategory\Collection $sourceCategoryCollection, array &$path)
+    public function getNamesPath(SourceCategory $sourceCategory, \Sumkabum\Magento2ProductImport\Model\ResourceModel\SourceCategory\Collection $sourceCategoryCollection, array $path = []): array
     {
         array_unshift($path, $sourceCategory->getData($sourceCategory::FIELD_CATEGORY_NAME));
         $parent = $this->getSourceCategoryParent($sourceCategory, $sourceCategoryCollection);
         if ($parent) {
-            $this->getNamesPath($parent, $sourceCategoryCollection, $path);
+            $path = $this->getNamesPath($parent, $sourceCategoryCollection, $path);
         }
+        return $path;
     }
 
     public function getSourceCategoryIds(array $sourceCategoriesDataRows): array
