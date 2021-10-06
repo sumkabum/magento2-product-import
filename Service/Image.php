@@ -49,7 +49,7 @@ class Image
      * @param string $username
      * @return Image
      */
-    public function setUsername(string $username): Image
+    public function setUsername(?string $username): Image
     {
         $this->username = $username;
         return $this;
@@ -67,7 +67,7 @@ class Image
      * @param string $password
      * @return Image
      */
-    public function setPassword(string $password): Image
+    public function setPassword(?string $password): Image
     {
         $this->password = $password;
         return $this;
