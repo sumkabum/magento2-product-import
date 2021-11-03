@@ -210,6 +210,9 @@ class Importer
 
 
                 foreach ($fieldsToCopyFromSimpleToConfigurable as $fieldToCopy) {
+                    if (!array_key_exists($fieldToCopy, $dataRow->mappedDataFields)) {
+                        continue;
+                    }
                     $configurableDataRow->mappedDataFields[$fieldToCopy] = $dataRow->mappedDataFields[$fieldToCopy];
                 }
 
