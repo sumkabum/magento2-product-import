@@ -163,7 +163,9 @@ class Importer
         // add sku as array key
         foreach ($dataRows as $key => $dataRow) {
             $dataRows[$dataRow->mappedDataFields['sku']] = $dataRow;
-            unset($dataRows[$key]);
+            if ((string) $dataRow->mappedDataFields['sku'] != (string)$key) {
+                unset($dataRows[$key]);
+            }
         }
 
         $configurableSkus = $this->collectConfigurableSkus($dataRows);
