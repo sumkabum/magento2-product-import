@@ -146,15 +146,21 @@ class ProductAttribute
      */
     public function getOptionByLabel(Attribute $attribute, string $optionLabel): ?AttributeOptionInterface
     {
-        $options = $attribute->getOptions();
+        $optionLabel = strtolower($optionLabel);
 
-        foreach ($options as $option) {
+        if (!array_key_exists($attribute->getAttributeCode(), $this->cacheAttributeOptions)
+            || !array_key_exists($optionLabel, $this->cacheAttributeOptions[$attribute->getAttributeCode()]))
+        {
 
-            if ($option instanceof Option) {
-                if (strtolower($option->getLabel()) == strtolower($optionLabel)) {
-                    return $option;
-                }
+            $options = $attribute->getOptions();
+            foreach ($options as $option) {
+                $this->cacheAttributeOptions[$attribute->getAttributeCode()][strtolower($option->getLabel())] = $option;
             }
+        }
+
+        if (array_key_exists($attribute->getAttributeCode(), $this->cacheAttributeOptions)
+            && array_key_exists($optionLabel, $this->cacheAttributeOptions[$attribute->getAttributeCode()])) {
+            return $this->cacheAttributeOptions[$attribute->getAttributeCode()][$optionLabel];
         }
 
         return null;
