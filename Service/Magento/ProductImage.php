@@ -187,7 +187,11 @@ class ProductImage
 
             $imageLocalFullPath = $this->getImagesLocalDirPath() . $this->getFilenameFromUrl($imageToAdd->getUrl());
 
-            $this->download($imageToAdd->getUrl(), $imageLocalFullPath, $imageToAdd->getUsername(), $imageToAdd->getPassword());
+            if ($downloader = $imageToAdd->getDownloader()) {
+                $downloader->download($imageToAdd->getUrl(), $imageLocalFullPath);
+            } else {
+                $this->download($imageToAdd->getUrl(), $imageLocalFullPath, $imageToAdd->getUsername(), $imageToAdd->getPassword());
+            }
 
             if (!$this->isValid($imageLocalFullPath)) {
                 $this->logger->info($product->getSku() . ' Invalid image. Url: ' . $imageToAdd->getUrl());

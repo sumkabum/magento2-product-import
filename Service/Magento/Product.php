@@ -17,6 +17,7 @@ use Magento\Framework\Exception\StateException;
 use Magento\Framework\ObjectManagerInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use Psr\Log\LoggerInterface;
+use Sumkabum\Magento2ProductImport\Service\Report;
 use Sumkabum\Magento2ProductImport\Service\UpdateFieldInterface;
 
 class Product
@@ -108,6 +109,9 @@ class Product
      */
     public function getReport(): \Sumkabum\Magento2ProductImport\Service\Report
     {
+        if (!$this->report) {
+            $this->report = $this->objectManager->get(Report::class);
+        }
         return $this->report;
     }
 
@@ -220,7 +224,7 @@ class Product
                 unset($simpleProducts[$simpleProductKey]);
                 $message = $configurableProduct->getSku() . ' not associating with ' . $simpleProduct->getSku() . ' because having same set of attribute values than other simple product';
                 $this->logger->alert($message);
-                $this->report->increaseByNumber('Child products have same configurable attribute values');
+                $this->getReport()->increaseByNumber('Child products have same configurable attribute values');
             }
             $existingValues[$existingValue] = $existingValue;
         }

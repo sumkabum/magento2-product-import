@@ -19,6 +19,8 @@ class Image
      */
     private $password;
 
+    private $downloader;
+
     /**
      * @return mixed
      */
@@ -70,6 +72,23 @@ class Image
     public function setPassword(?string $password): Image
     {
         $this->password = $password;
+        return $this;
+    }
+
+    /**
+     * @return DownloaderInterface
+     */
+    public function getDownloader(): DownloaderInterface
+    {
+        return $this->downloader;
+    }
+
+    /**
+     * @param DownloaderInterface $downloader
+     */
+    public function setDownloader(DownloaderInterface $downloader): Image
+    {
+        $this->downloader = $downloader;
         return $this;
     }
 

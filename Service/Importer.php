@@ -5,6 +5,7 @@ use Magento\Catalog\Model\Product;
 use Magento\Catalog\Model\Product\Attribute\Source\Status;
 use Magento\Catalog\Model\Product\Type;
 use Magento\ConfigurableProduct\Model\Product\Type\Configurable;
+use Magento\Framework\ObjectManagerInterface;
 use Sumkabum\Magento2ProductImport\Service\Magento\ProductImage;
 use Psr\Log\LoggerInterface;
 
@@ -28,15 +29,19 @@ class Importer
      */
     private $report;
 
+    private $objectManager;
+
     public function __construct(
         \Sumkabum\Magento2ProductImport\Service\Magento\Product $productService,
         ProductImage $productImageService,
-        LoggerInterface $logger
+        LoggerInterface $logger,
+        ObjectManagerInterface $objectManager
     ) {
 
         $this->productService = $productService;
         $this->productImageService = $productImageService;
         $this->logger = $logger;
+        $this->objectManager = $objectManager;
     }
 
     /**
@@ -54,6 +59,9 @@ class Importer
      */
     public function getReport(): Report
     {
+        if (!$this->report) {
+            $this->report = $this->objectManager->get(Report::class);
+        }
         return $this->report;
     }
 
@@ -81,7 +89,7 @@ class Importer
     public function import(array $dataRows, array $doNotUpdateFields = [], array $fieldsToCopyFromSimpleToConfigurable = [], array $linkableAttributeCodes = [])
     {
         $this->productImageService->setLogger($this->logger);
-        $this->productImageService->setReport($this->report);
+        $this->productImageService->setReport($this->getReport());
 
         $configurableDataRows = $this->getConfigurableProducts($dataRows, $fieldsToCopyFromSimpleToConfigurable);
         $count = count($configurableDataRows);
