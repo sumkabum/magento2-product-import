@@ -102,14 +102,14 @@ class Importer
             }
 
             try {
-                $configurableProduct = $this->productService->save($configurableDataRow->mappedDataFields, $doNotUpdateFields);
+                $configurableProduct = $this->productService->save($configurableDataRow->mappedDataFields, $doNotUpdateFields, $configurableDataRow->storeBasedAttributeValuesArray);
                 $configurableProduct = $this->updateImages($configurableProduct, $configurableDataRow);
 
                 $simpleProductDataRows = $this->getSimpleProductsForConfigurable($configurableDataRow->mappedDataFields['sku'], $dataRows);
 
                 $simpleProducts = [];
                 foreach ($simpleProductDataRows as $simpleProductDataRow) {
-                    $simpleProduct = $this->productService->save($simpleProductDataRow->mappedDataFields, $doNotUpdateFields);
+                    $simpleProduct = $this->productService->save($simpleProductDataRow->mappedDataFields, $doNotUpdateFields, $simpleProductDataRow->storeBasedAttributeValuesArray);
                     $this->report->increaseByNumber($this->report::KEY_PRODUCTS_UPDATED);
 
                     $simpleProduct = $this->updateImages($simpleProduct, $simpleProductDataRow);
@@ -134,7 +134,7 @@ class Importer
             }
 
             try {
-                $simpleProduct = $this->productService->save($notConfigurableDataRow->mappedDataFields, $doNotUpdateFields);
+                $simpleProduct = $this->productService->save($notConfigurableDataRow->mappedDataFields, $doNotUpdateFields, $notConfigurableDataRow->storeBasedAttributeValuesArray);
                 $this->report->increaseByNumber($this->report::KEY_PRODUCTS_UPDATED);
                 $this->updateImages($simpleProduct, $notConfigurableDataRow);
             } catch (\Exception $e) {
@@ -207,26 +207,34 @@ class Importer
 
 
             // find first child
-            foreach ($dataRows as $dataRow) {
-                if ($dataRow->parentSku != $configurableSku) {
+            foreach ($dataRows as $firstChildDataRow) {
+                if ($firstChildDataRow->parentSku != $configurableSku) {
                     continue;
                 }
 
                 if (!count($configurableDataRow->images)) {
-                    foreach ($dataRow->images as $dataRowImage) {
+                    foreach ($firstChildDataRow->images as $dataRowImage) {
                         $configurableDataRow->images[] = $dataRowImage;
                     }
                 }
 
 
                 foreach ($fieldsToCopyFromSimpleToConfigurable as $fieldToCopy) {
-                    if (!array_key_exists($fieldToCopy, $dataRow->mappedDataFields)) {
+                    if (!array_key_exists($fieldToCopy, $firstChildDataRow->mappedDataFields)) {
                         continue;
                     }
-                    $configurableDataRow->mappedDataFields[$fieldToCopy] = $dataRow->mappedDataFields[$fieldToCopy];
+                    $configurableDataRow->mappedDataFields[$fieldToCopy] = $firstChildDataRow->mappedDataFields[$fieldToCopy];
+                    foreach ($firstChildDataRow->storeBasedAttributeValuesArray as $storeBasedAttributeValues) {
+                        foreach ($storeBasedAttributeValues->mappedDataFields as $storeBasedAttributeCode => $storeBasedAttributeValue) {
+                            if ($storeBasedAttributeCode != $fieldToCopy) {
+                                continue;
+                            }
+                            $configurableDataRow->addStoreBasedValue($storeBasedAttributeValues->storeId, $storeBasedAttributeCode, $storeBasedAttributeValue);
+                        }
+                    }
                 }
 
-                $configurableDataRow->mappedDataFields['attribute_set_id'] = $dataRow->mappedDataFields['attribute_set_id'];
+                $configurableDataRow->mappedDataFields['attribute_set_id'] = $firstChildDataRow->mappedDataFields['attribute_set_id'];
 
                 if (empty($configurableDataRow->mappedDataFields['url_key'])) {
                     if (empty($configurableDataRow->mappedDataFields['name']) || empty($configurableDataRow->mappedDataFields['sku'])) {

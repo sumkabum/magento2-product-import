@@ -5,6 +5,7 @@ use Exception;
 use Magento\Catalog\Api\CategoryLinkManagementInterface;
 use Magento\Catalog\Api\Data\ProductInterface;
 use Magento\Catalog\Api\ProductRepositoryInterface;
+use Magento\Catalog\Model\Product\Action as ProductAction;
 use Magento\Catalog\Model\Product\Attribute\Source\Status;
 use Magento\ConfigurableProduct\Model\Product\Type\Configurable;
 use Magento\Framework\App\Area;
@@ -18,6 +19,7 @@ use Magento\Framework\ObjectManagerInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use Psr\Log\LoggerInterface;
 use Sumkabum\Magento2ProductImport\Service\Report;
+use Sumkabum\Magento2ProductImport\Service\StoreBasedAttributeValues;
 use Sumkabum\Magento2ProductImport\Service\UpdateFieldInterface;
 
 class Product
@@ -128,13 +130,13 @@ class Product
     /**
      * @param array $productData
      * @param array $doNotUpdateFields
+     * @param StoreBasedAttributeValues[] $storeBasedAttributeValuesArray
      * @return ProductInterface|mixed
-     * @throws \Magento\Framework\Exception\CouldNotSaveException
-     * @throws \Magento\Framework\Exception\InputException
-     * @throws \Magento\Framework\Exception\StateException
-     * @throws Exception
+     * @throws CouldNotSaveException
+     * @throws InputException
+     * @throws StateException
      */
-    public function save(array $productData, array $doNotUpdateFields = []): ProductInterface
+    public function save(array $productData, array $doNotUpdateFields = [], array $storeBasedAttributeValuesArray = []): ProductInterface
     {
         $this->setAreaCode();
         $product = $this->getProduct($productData['sku']);
@@ -184,7 +186,25 @@ class Product
         if (isset($productData['category_ids'])) {
             $this->assignProductToCategories($product->getSku(), $productData['category_ids']);
         }
+
+        if (count($storeBasedAttributeValuesArray) > 0) {
+            foreach ($storeBasedAttributeValuesArray as $storeBasedAttributeValues) {
+                $this->updateStoreBasedAttributeValue(
+                    [$product->getId()],
+                    $storeBasedAttributeValues->mappedDataFields,
+                    $storeBasedAttributeValues->storeId
+                );
+            }
+        }
+
         return $product;
+    }
+
+    public function updateStoreBasedAttributeValue(array $productIds, $productData, $storeId)
+    {
+        /** @var ProductAction $productAction */
+        $productAction = $this->objectManager->get(ProductAction::class);
+        $productAction->updateAttributes($productIds, $productData, $storeId);
     }
 
     /**
