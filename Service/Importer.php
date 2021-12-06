@@ -8,6 +8,7 @@ use Magento\ConfigurableProduct\Model\Product\Type\Configurable;
 use Magento\Framework\ObjectManagerInterface;
 use Sumkabum\Magento2ProductImport\Service\Magento\ProductImage;
 use Psr\Log\LoggerInterface;
+use Throwable;
 
 class Importer
 {
@@ -117,9 +118,9 @@ class Importer
                 }
 
                 $this->productService->associateConfigurableWithSimpleProducts($configurableProduct, $simpleProducts, $linkableAttributeCodes);
-            } catch (\Exception $e) {
-                $this->logger->error($configurableDataRow->mappedDataFields['sku'] . ' Failed to save! ' . $e->getMessage() . $e->getTraceAsString());
-                $this->report->addMessage($this->report::KEY_ERRORS, $configurableDataRow->mappedDataFields['sku'] . ' ' . $e->getMessage());
+            } catch (Throwable $t) {
+                $this->logger->error($configurableDataRow->mappedDataFields['sku'] . ' Failed to save! ' . $t->getMessage() . $t->getTraceAsString());
+                $this->report->addMessage($this->report::KEY_ERRORS, $configurableDataRow->mappedDataFields['sku'] . ' ' . $t->getMessage());
             }
         }
 

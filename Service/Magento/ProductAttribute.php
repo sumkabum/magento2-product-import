@@ -290,7 +290,7 @@ class ProductAttribute
      * @throws LocalizedException
      * @throws Zend_Validate_Exception
      */
-    public function createAttribute(string $attributeCode, int $attributeSetId)
+    public function createAttribute(string $attributeCode, int $attributeSetId, $attributeCreateData = [])
     {
         $attributeData = [
             'type' => 'varchar',
@@ -313,6 +313,10 @@ class ProductAttribute
             'unique' => 0,
             'apply_to' => '',
         ];
+
+        foreach ($attributeCreateData as $attributeCreateDataKey => $attributeCreateValue)  {
+            $attributeData[$attributeCreateDataKey] = $attributeCreateValue;
+        }
 
         /** @var EavSetup $eavSetup */
         $eavSetup = ObjectManager::getInstance()->get(EavSetup::class);
@@ -366,7 +370,7 @@ class ProductAttribute
      * @param array $dataFields
      * @throws Exception
      */
-    public function checkIfAllAttributesExists(array $dataFields)
+    public function checkIfAllAttributesExists(array $dataFields, $attributeSetId = null, $attributeCreateData = [])
     {
         $doNotCheckThese = [
             'attribute_set_id',
@@ -381,11 +385,11 @@ class ProductAttribute
             if (in_array($key, $doNotCheckThese)) {
                 continue;
             }
-            if (!$this->productAttributeExists($key, $dataFields['attribute_set_id'])) {
-                $this->createAttribute($key, $dataFields['attribute_set_id']);
+            if (!$this->productAttributeExists($key, $attributeSetId ?? $dataFields['attribute_set_id'])) {
+                $this->createAttribute($key, $attributeSetId ?? $dataFields['attribute_set_id'], $attributeCreateData);
                 $this->existingAttributesCache = [];
                 $this->cacheManager->clean($this->cacheManager->getAvailableTypes());
-                $this->magentoProductService->logger->info("Created attribute: $key and added to attribute_set_id: {$dataFields['attribute_set_id']}");
+                $this->logger->info("Created attribute: $key and added to attribute_set_id: {$dataFields['attribute_set_id']}");
             }
         }
     }
