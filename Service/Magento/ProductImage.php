@@ -140,11 +140,16 @@ class ProductImage
         /** @var Entry[] $imagesToDelete */
         $imagesToDelete = [];
 
+        $alreadyCheckedExistingImageFileNames = [];
         // Get images to delete
         foreach ($existingImages as $existingImageKey => $existingImage) {
             $needsDelete = true;
             foreach ($images as $image) {
-                if ($this->areTheFilenamesSame($existingImage->getFile(), $this->getFilenameFromUrl($image->getUrl())) && file_exists($this->getCatalogProductImageFullPath($existingImage->getFile()))) {
+                if ($this->areTheFilenamesSame($existingImage->getFile(), $this->getFilenameFromUrl($image->getUrl()))
+                    && file_exists($this->getCatalogProductImageFullPath($existingImage->getFile()))
+                    && !isset($alreadyCheckedExistingImageFileNames[$this->getFilenameFromUrl($image->getUrl())])
+                ) {
+                    $alreadyCheckedExistingImageFileNames[$this->getFilenameFromUrl($image->getUrl())] = $this->getFilenameFromUrl($image->getUrl());
                     $needsDelete = false;
                     break;
                 }

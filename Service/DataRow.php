@@ -28,7 +28,7 @@ class DataRow
      */
     public $storeBasedAttributeValuesArray = [];
 
-    public function addStoreBasedValue(int $storeId, string $attributeCode, string $attributeValue)
+    public function addStoreBasedValue(int $storeId, string $attributeCode, ?string $attributeValue)
     {
         if (!isset($this->storeBasedAttributeValuesArray[$storeId])) {
             $storeBasedAttributeValues = new StoreBasedAttributeValues();
