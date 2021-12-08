@@ -18,6 +18,7 @@ use Magento\Framework\Exception\StateException;
 use Magento\Framework\ObjectManagerInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use Psr\Log\LoggerInterface;
+use Sumkabum\Magento2ProductImport\Service\Logger;
 use Sumkabum\Magento2ProductImport\Service\Report;
 use Sumkabum\Magento2ProductImport\Service\StoreBasedAttributeValues;
 use Sumkabum\Magento2ProductImport\Service\UpdateFieldInterface;
@@ -73,7 +74,7 @@ class Product
         State $state,
         ProductAttribute $productAttributeService,
         UrlKey $urlKeyService,
-        LoggerInterface $logger,
+        Logger $logger,
         \Magento\Indexer\Model\Indexer\CollectionFactory $indexerCollectionFactory,
         \Magento\Framework\Api\SearchCriteriaBuilder $searchCriteriaBuilder
     ) {
@@ -353,7 +354,7 @@ class Product
                 if (!in_array($product->getSku(), $skuList)) {
                     if ($product->getStatus() == Status::STATUS_ENABLED) {
                         $this->disableProduct($product);
-                        $this->report->increaseByNumber($this->report::KEY_STATUS_CHANGED_TO_DISABLED);
+                        $this->getReport()->increaseByNumber($this->report::KEY_STATUS_CHANGED_TO_DISABLED);
                         $this->logger->info($product->getSku() . ' Not exists in feed. Updated status to disabled');
                     } else {
                         $this->logger->info($product->getSku() . ' Not exists in feed. Already disabled');
