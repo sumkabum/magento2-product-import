@@ -7,10 +7,22 @@ use Magento\Catalog\Model\ResourceModel\Category\Collection;
 use Magento\Framework\App\ObjectManager;
 use Magento\Framework\DataObject;
 use Magento\Framework\Exception\CouldNotSaveException;
+use Sumkabum\Magento2ProductImport\Service\Logger;
 
 class Category
 {
     private $cacheCategory = [];
+    /**
+     * @var Logger
+     */
+    private $logger;
+
+    public function __construct(
+        Logger $logger
+    ) {
+        $this->logger = $logger;
+    }
+
 
     /**
      * @throws CouldNotSaveException
@@ -106,6 +118,8 @@ class Category
 
         /** @var CategoryRepository $categoryRepository */
         $categoryRepository = ObjectManager::getInstance()->create(CategoryRepositoryInterface::class);
-        return $categoryRepository->save($category);
+        $category = $categoryRepository->save($category);
+        $this->logger->info('Created new category. id: ' . $category->getId() . ' name: ' . $category->getName());
+        return $category;
     }
 }

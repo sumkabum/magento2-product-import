@@ -16,6 +16,7 @@ use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\StateException;
 use Magento\Store\Model\App\Emulation;
 use Sumkabum\Magento2ProductImport\Service\Image;
+use Sumkabum\Magento2ProductImport\Service\Logger;
 use Sumkabum\Magento2ProductImport\Service\Report;
 use Psr\Log\LoggerInterface;
 
@@ -70,7 +71,7 @@ class ProductImage
         Processor $imageProcessor,
         DirectoryList $directoryList,
         ProductRepositoryInterface $productRepository,
-        LoggerInterface $logger
+        Logger $logger
     ) {
         $this->emulation = $emulation;
         $this->galleryReadHandler = $galleryReadHandler;

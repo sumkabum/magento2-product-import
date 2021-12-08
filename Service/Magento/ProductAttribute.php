@@ -22,6 +22,7 @@ use Magento\Swatches\Helper\Media;
 use Magento\Swatches\Model\Swatch;
 use PDO;
 use Psr\Log\LoggerInterface;
+use Sumkabum\Magento2ProductImport\Service\Logger;
 use Zend_Validate_Exception;
 
 class ProductAttribute
@@ -88,7 +89,7 @@ class ProductAttribute
         AttributeOptionInterfaceFactory $attributeOptionFactory,
         Filesystem $filesystem,
         Product\Media\Config $mediaConfig,
-        LoggerInterface $logger
+        Logger $logger
     ) {
         $this->cacheManager = $cacheManager;
         $this->eavConfig = $eavConfig;

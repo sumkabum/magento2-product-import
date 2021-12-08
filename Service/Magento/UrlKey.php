@@ -14,6 +14,7 @@ use Magento\UrlRewrite\Model\ResourceModel\UrlRewriteCollection;
 use Magento\UrlRewrite\Model\UrlPersistInterface;
 use Magento\UrlRewrite\Service\V1\Data\UrlRewrite;
 use Psr\Log\LoggerInterface;
+use Sumkabum\Magento2ProductImport\Service\Logger;
 
 class UrlKey
 {
@@ -53,7 +54,7 @@ class UrlKey
         UrlPersistInterface $urlPersist,
         StoreManagerInterface $storeManager,
         ProductUrlRewriteGenerator $productUrlRewriteGenerator,
-        LoggerInterface $logger
+        Logger $logger
     ) {
         $this->scopeConfig = $scopeConfig;
         $this->productRepository = $productRepository;
