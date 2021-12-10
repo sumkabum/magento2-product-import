@@ -1,6 +1,7 @@
 <?php
 namespace Sumkabum\Magento2ProductImport\Service;
 
+use Exception;
 use Magento\Catalog\Model\Product;
 use Magento\Catalog\Model\Product\Attribute\Source\Status;
 use Magento\Catalog\Model\Product\Type;
@@ -138,7 +139,7 @@ class Importer
                 $simpleProduct = $this->productService->save($notConfigurableDataRow->mappedDataFields, $doNotUpdateFields, $notConfigurableDataRow->storeBasedAttributeValuesArray);
                 $this->report->increaseByNumber($this->report::KEY_PRODUCTS_UPDATED);
                 $this->updateImages($simpleProduct, $notConfigurableDataRow);
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 $this->logger->error($notConfigurableDataRow->mappedDataFields['sku'] . ' Failed to save! ' . $e->getMessage() . $e->getTraceAsString());
                 $this->report->addMessage($this->report::KEY_ERRORS, $notConfigurableDataRow->mappedDataFields['sku'] . ' ' . $e->getMessage());
             }
@@ -319,6 +320,7 @@ class Importer
     /**
      * @param DataRow[] $dataRows
      * @return DataRow[]
+     * @throws Exception
      */
     private function getNotConfigurableDataRows(array $dataRows): array
     {
@@ -327,6 +329,10 @@ class Importer
         foreach ($dataRows as $dataRow) {
             if (!empty($dataRow->parentSku)) {
                 continue;
+            }
+
+            if (!array_key_exists('type_id', $dataRow->mappedDataFields)) {
+                throw new Exception($dataRow->mappedDataFields['sku'] . ' Unable to get configurable dataRows. missing key type_id');
             }
 
             if ($dataRow->mappedDataFields['type_id'] == Type::TYPE_SIMPLE) {

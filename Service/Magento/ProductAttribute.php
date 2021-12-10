@@ -348,23 +348,9 @@ class ProductAttribute
 
     public function productAttributeExists(string $attribute_code, int $attribute_set_id)
     {
-        if (empty($this->existingAttributesCache)) {
-            /** @var ResourceConnection $resourceConnection */
-            $resourceConnection = ObjectManager::getInstance()->get(ResourceConnection::class);
-            $connection = $resourceConnection->getConnection();
-            $this->existingAttributesCache = $connection->fetchAll("
-                SELECT eav_attribute.attribute_code, eav_attribute.* FROM eav_entity_attribute
-                    LEFT JOIN eav_attribute on eav_attribute.attribute_id = eav_entity_attribute.attribute_id
-                    LEFT JOIN eav_entity_type on eav_entity_type.entity_type_id = eav_entity_attribute.entity_type_id
-                    WHERE eav_entity_attribute.attribute_set_id = :attribute_set_id AND
-                        eav_entity_type.entity_type_code = :entity_type_code
-            ", [
-                'attribute_set_id' => $attribute_set_id,
-                'entity_type_code' => \Magento\Catalog\Model\Product::ENTITY
-            ], PDO::FETCH_GROUP|PDO::FETCH_UNIQUE|PDO::FETCH_ASSOC);
-        }
-
-        return isset($this->existingAttributesCache[$attribute_code]);
+        /** @var \Sumkabum\Magento2ProductImport\Service\Magento\Attribute $attributeService */
+        $attributeService = ObjectManager::getInstance()->get(\Sumkabum\Magento2ProductImport\Service\Magento\Attribute::class);
+        return $attributeService->attributeExists(Product::ENTITY, $attribute_code);
     }
 
     /**
