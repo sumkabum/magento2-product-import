@@ -78,7 +78,7 @@ class Image
     /**
      * @return DownloaderInterface
      */
-    public function getDownloader(): DownloaderInterface
+    public function getDownloader(): ?DownloaderInterface
     {
         return $this->downloader;
     }
