@@ -220,7 +220,8 @@ class ProductImage
         }
 
         if (!empty($imagesToAdd) || !empty($imagesToDelete) || $this->someThumbnailsMissing($product) && (count($images) > 0)) {
-            $this->updateThumbnails($product, reset($images));
+            $firstImage = reset($images) ? reset($images) : null;
+            $this->updateThumbnails($product, $firstImage);
             $this->updateImagesPositions($product, $images);
             $product = $this->productRepository->save($product);
         }
@@ -256,10 +257,10 @@ class ProductImage
 
     /**
      * @param \Magento\Catalog\Model\Product $product
-     * @param Image $image
+     * @param Image|null $image
      * @throws LocalizedException
      */
-    public function updateThumbnails(\Magento\Catalog\Model\Product $product, Image $image)
+    public function updateThumbnails(\Magento\Catalog\Model\Product $product, ?Image $image)
     {
         $this->galleryReadHandler->execute($product);
         $mediaGalleryEntries = $product->getMediaGalleryEntries();
@@ -267,7 +268,7 @@ class ProductImage
         $thumbnailImageName = '';
 
         foreach ($mediaGalleryEntries as $existingImage) {
-            if ($this->areTheFilenamesSame($existingImage->getFile(), $this->getFilenameFromUrl($image->getUrl()))) {
+            if ($image && $this->areTheFilenamesSame($existingImage->getFile(), $this->getFilenameFromUrl($image->getUrl()))) {
                 $thumbnailImageName = $existingImage->getFile();
                 break;
             }
