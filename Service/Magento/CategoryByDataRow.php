@@ -134,9 +134,6 @@ class CategoryByDataRow
         $cacheKey = ($magentoParentCategory ? $magentoParentCategory->getEntityId() : '') . '-' . $dataRowCategory->id;
         if (!array_key_exists($cacheKey, $this->cacheGetOrCreateCategoryUsing)) {
             $this->cacheGetOrCreateCategoryUsing[$cacheKey] = $this->getOrCreateCategory($dataRowCategory, $magentoParentCategory);
-            $this->logger->info('NOT using cache');
-        } else {
-            $this->logger->info('using cache');
         }
         return $this->cacheGetOrCreateCategoryUsing[$cacheKey];
     }
