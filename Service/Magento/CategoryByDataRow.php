@@ -3,6 +3,7 @@ namespace Sumkabum\Magento2ProductImport\Service\Magento;
 
 use Magento\Catalog\Api\CategoryRepositoryInterface;
 use Magento\Catalog\Model\ResourceModel\Category\Collection;
+use Magento\Framework\App\Area;
 use Magento\Framework\App\ObjectManager;
 use Magento\Framework\DataObject;
 use Magento\Framework\Exception\CouldNotSaveException;
@@ -33,6 +34,8 @@ class CategoryByDataRow
 
     private $cacheLoadCategoryByNameAndParentId;
 
+    private $cacheGetOrCreateCategoryUsing = [];
+
     public function __construct(
         Logger $logger,
         StoreManagerInterface $storeManager,
@@ -43,6 +46,14 @@ class CategoryByDataRow
         $this->storeManager = $storeManager;
         $this->categoryAttributeService = $categoryAttributeService;
         $this->categoryRepository = $categoryRepository;
+
+        try {
+            $this->storeManager->setCurrentStore(0);
+            /** @var \Magento\Framework\App\State $state */
+            $state = ObjectManager::getInstance()->get(\Magento\Framework\App\State::class);
+            $state->setAreaCode(Area::AREA_GLOBAL);
+        } catch (\Exception $e) { }
+
     }
 
     public function disableCategoriesNotInList(array $validSourceIdsList, string $sourceCode, $fieldNameSourceCode = self::CATEGORY_FIELD_NAME_SOURCE_CODE, string $fieldNameSourceId = self::CATEGORY_FIELD_NAME_SOURCE_ID)
@@ -50,17 +61,24 @@ class CategoryByDataRow
         /** @var Collection $categoryCollection */
         $categoryCollection = ObjectManager::getInstance()->create(Collection::class);
         $categoryCollection
+            ->setStoreId(0)
+            ->addAttributeToSelect('*')
             ->addFieldToFilter($fieldNameSourceCode, $sourceCode)
-            ->addFieldToFilter($fieldNameSourceId, ['nin' => $validSourceIdsList])
+            ->addFieldToFilter([
+              ['attribute' => $fieldNameSourceId, 'nin' => $validSourceIdsList],
+              ['attribute' => $fieldNameSourceId, 'null' => true]
+            ])
             ->addFieldToFilter('is_active', 1)
             ->load();
+
+        $this->logger->info('Categories count to disable: ' . $categoryCollection->count());
 
         foreach ($categoryCollection->getItems() as $category) {
             $category->setData('is_active', 0);
             $this->categoryRepository->save($category);
-            $this->logger->info('Category disabled source_id: ' . $category->getData($fieldNameSourceId)
+            $this->logger->info('Disabling old category with ' . $fieldNameSourceId . ': ' . $category->getData($fieldNameSourceId)
                 . ' magento category id: ' . $category->getData('entity_id')
-                . ' mame: ' . $category->getData('name')
+                . ' name: ' . $category->getData('name')
             );
         }
     }
@@ -101,6 +119,26 @@ class CategoryByDataRow
             $category = ObjectManager::getInstance()->create(\Magento\Catalog\Model\Category::class);
         }
         return $this->updateCategory($category, $dataRowCategory, $parentCategoryId);
+    }
+
+    /**
+     * @param DataRowCategory $dataRowCategory
+     * @param \Magento\Catalog\Model\Category|null $magentoParentCategory
+     * @return \Magento\Catalog\Model\Category|DataObject
+     * @throws CouldNotSaveException
+     * @throws \Magento\Framework\Exception\LocalizedException
+     * @throws \Zend_Validate_Exception
+     */
+    public function getOrCreateCategoryUsingCache(DataRowCategory $dataRowCategory, ?\Magento\Catalog\Model\Category $magentoParentCategory = null)
+    {
+        $cacheKey = ($magentoParentCategory ? $magentoParentCategory->getEntityId() : '') . '-' . $dataRowCategory->id;
+        if (!array_key_exists($cacheKey, $this->cacheGetOrCreateCategoryUsing)) {
+            $this->cacheGetOrCreateCategoryUsing[$cacheKey] = $this->getOrCreateCategory($dataRowCategory, $magentoParentCategory);
+            $this->logger->info('NOT using cache');
+        } else {
+            $this->logger->info('using cache');
+        }
+        return $this->cacheGetOrCreateCategoryUsing[$cacheKey];
     }
 
     /**
@@ -177,7 +215,27 @@ class CategoryByDataRow
         foreach ($dataRowCategories as $dataRowCategory) {
             $paths[] = $this->getDataRowPath($dataRowCategory, $dataRowCategories);
         }
-        return $paths;
+
+        $pathsByIdKeys = [];
+
+        foreach ($paths as $path) {
+            $pathIds = [];
+            foreach ($path as $cat) {
+                $pathIds[] = $cat->id;
+            }
+            $pathsByIdKeys[implode('-', $pathIds)] = $path;
+        }
+
+        foreach ($pathsByIdKeys as $idsKeyA => $pathA) {
+            foreach ($pathsByIdKeys as $idsKeyB => $pathB) {
+                if ($idsKeyA === $idsKeyB) continue;
+                if (strpos((string)$idsKeyB, (string)$idsKeyA) !== false) {
+                    unset($pathsByIdKeys[$idsKeyA]);
+                    break;
+                }
+            }
+        }
+        return $pathsByIdKeys;
     }
 
     /**
@@ -232,11 +290,14 @@ class CategoryByDataRow
             $this->logger->info('Category attribute created attribute_code: ' . $attributeCode);
         }
 
+        $sourceCategoryIdCreated = [];
         $magentoCategories = [];
         $magentoCategoryParent = null;
         foreach ($dataRowCategoryPath as $dataRowCategory) {
-            $magentoCategoryParent = $this->getOrCreateCategory($dataRowCategory, $magentoCategoryParent);
+            if (array_key_exists($dataRowCategory->id, $sourceCategoryIdCreated)) continue;
+            $magentoCategoryParent = $this->getOrCreateCategoryUsingCache($dataRowCategory, $magentoCategoryParent);
             $magentoCategories[] = $magentoCategoryParent;
+            $sourceCategoryIdCreated[$dataRowCategory->id] = $dataRowCategory;
         }
         return $magentoCategories;
     }
