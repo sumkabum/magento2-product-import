@@ -232,6 +232,7 @@ class ProductAttribute
 
         $attribute = $this->attributeRepository->save($attribute);
         $this->cacheAttributes[$attribute->getAttributeCode()] = $attribute;
+        $this->logger->info('Created new attribute option. attribute_code: ' . $attribute->getAttributeCode() . ' optionLabel: ' . $label);
         return $option;
     }
 

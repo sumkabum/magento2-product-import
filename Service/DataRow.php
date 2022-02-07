@@ -24,4 +24,12 @@ class DataRow
      * @var string
      */
     public $parentSku;
+    /**
+     * @var bool
+     */
+    public $needsUpdatingInMagento = true;
+    /**
+     * @var bool
+     */
+    public $overwriteNeedsUpdatingIfIsParentAndChildrenDoesntNeedUpdate = true;
 }

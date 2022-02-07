@@ -19,6 +19,7 @@ class Report
     const KEY_PRODUCTS_PROCESSED = 'Products Processed';
     const KEY_PRODUCTS_CREATED = 'Products Created';
     const KEY_PRODUCTS_UPDATED = 'Products Updated';
+    const KEY_PRODUCTS_DIDNT_NEED_UPDATING = 'Products didnt need updating';
     const KEY_STATUS_CHANGED_TO_ENABLED = 'Status Changed To Enabled';
     const KEY_STATUS_CHANGED_TO_DISABLED = 'Status Changed To Disabled';
     const KEY_ERRORS = 'Errors';

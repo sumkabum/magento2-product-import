@@ -301,7 +301,7 @@ class Product
         return $this->productRepository->save($configurableProduct);
     }
 
-    protected function getProduct(string $sku)
+    public function getProduct(string $sku)
     {
         try {
             $product = $this->productRepository->get($sku);
@@ -309,6 +309,16 @@ class Product
             $product = $this->objectManager->create(ProductInterface::class);
         }
         return $product;
+    }
+
+    public function productExists(string $sku): bool
+    {
+        try {
+            $product = $this->productRepository->get($sku);
+        } catch (NoSuchEntityException $e) {
+            return false;
+        }
+        return (bool)$product->getEntityId();
     }
 
     /**

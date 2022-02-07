@@ -104,21 +104,36 @@ class Importer
             }
 
             try {
-                $configurableProduct = $this->productService->save($configurableDataRow->mappedDataFields, $doNotUpdateFields, $configurableDataRow->storeBasedAttributeValuesArray);
-                $configurableProduct = $this->updateImages($configurableProduct, $configurableDataRow);
-
                 $simpleProductDataRows = $this->getSimpleProductsForConfigurable($configurableDataRow->mappedDataFields['sku'], $dataRows);
+
+                if (
+                    $this->productService->productExists($configurableDataRow->mappedDataFields['sku'])
+                    && $configurableDataRow->needsUpdatingInMagento
+                    && $configurableDataRow->overwriteNeedsUpdatingIfIsParentAndChildrenDoesntNeedUpdate
+                ) {
+                    $configurableDataRow->needsUpdatingInMagento = false;
+                    foreach ($simpleProductDataRows as $simpleProductDataRow) {
+                        if ($simpleProductDataRow->needsUpdatingInMagento) {
+                            $configurableDataRow->needsUpdatingInMagento = true;
+                            break;
+                        }
+                    }
+                }
+
+                $configurableProduct = $this->saveProduct($configurableDataRow, $doNotUpdateFields);
+                $configurableProduct = $this->updateImages($configurableProduct, $configurableDataRow);
 
                 $simpleProducts = [];
                 foreach ($simpleProductDataRows as $simpleProductDataRow) {
-                    $simpleProduct = $this->productService->save($simpleProductDataRow->mappedDataFields, $doNotUpdateFields, $simpleProductDataRow->storeBasedAttributeValuesArray);
-                    $this->report->increaseByNumber($this->report::KEY_PRODUCTS_UPDATED);
+                    $simpleProduct = $this->saveProduct($simpleProductDataRow, $doNotUpdateFields);
 
                     $simpleProduct = $this->updateImages($simpleProduct, $simpleProductDataRow);
                     $simpleProducts[] = $simpleProduct;
                 }
 
-                $this->productService->associateConfigurableWithSimpleProducts($configurableProduct, $simpleProducts, $linkableAttributeCodes);
+                if ($configurableDataRow->needsUpdatingInMagento) {
+                    $this->productService->associateConfigurableWithSimpleProducts($configurableProduct, $simpleProducts, $linkableAttributeCodes);
+                }
             } catch (Throwable $t) {
                 $this->logger->error($configurableDataRow->mappedDataFields['sku'] . ' Failed to save! ' . $t->getMessage() . $t->getTraceAsString());
                 $this->report->addMessage($this->report::KEY_ERRORS, $configurableDataRow->mappedDataFields['sku'] . ' ' . $t->getMessage());
@@ -136,13 +151,32 @@ class Importer
             }
 
             try {
-                $simpleProduct = $this->productService->save($notConfigurableDataRow->mappedDataFields, $doNotUpdateFields, $notConfigurableDataRow->storeBasedAttributeValuesArray);
+                $simpleProduct = $this->saveProduct($notConfigurableDataRow, $doNotUpdateFields);
                 $this->report->increaseByNumber($this->report::KEY_PRODUCTS_UPDATED);
                 $this->updateImages($simpleProduct, $notConfigurableDataRow);
             } catch (Exception $e) {
                 $this->logger->error($notConfigurableDataRow->mappedDataFields['sku'] . ' Failed to save! ' . $e->getMessage() . $e->getTraceAsString());
                 $this->report->addMessage($this->report::KEY_ERRORS, $notConfigurableDataRow->mappedDataFields['sku'] . ' ' . $e->getMessage());
             }
+        }
+    }
+
+    /**
+     * @param DataRow $dataRow
+     * @param array $doNotUpdateFields
+     * @return \Magento\Catalog\Api\Data\ProductInterface|mixed
+     * @throws \Magento\Framework\Exception\CouldNotSaveException
+     * @throws \Magento\Framework\Exception\InputException
+     * @throws \Magento\Framework\Exception\StateException
+     */
+    public function saveProduct(DataRow $dataRow, array $doNotUpdateFields)
+    {
+        if ($dataRow->needsUpdatingInMagento) {
+            $this->report->increaseByNumber($this->report::KEY_PRODUCTS_UPDATED);
+            return $this->productService->save($dataRow->mappedDataFields, $doNotUpdateFields, $dataRow->storeBasedAttributeValuesArray);
+        } else {
+            $this->report->increaseByNumber($this->report::KEY_PRODUCTS_DIDNT_NEED_UPDATING);
+            return $this->productService->getProduct($dataRow->mappedDataFields['sku']);
         }
     }
 
@@ -155,7 +189,9 @@ class Importer
      */
     public function updateImages(Product $product, DataRow $dataRow): Product
     {
-        if ($this->productService->isNewProduct($product) || $dataRow->catUpdateImagesIfProductExists) {
+        if ($dataRow->needsUpdatingInMagento
+            && ($this->productService->isNewProduct($product) || $dataRow->catUpdateImagesIfProductExists)
+        ) {
             $product = $this->productImageService->updateImages($product, $dataRow->images);
         }
         return $product;
