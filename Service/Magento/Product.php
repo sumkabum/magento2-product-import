@@ -361,15 +361,22 @@ class Product
         while (count($importedProducts->getItems()) > 0) {
             $this->logger->info('Checking old products. Progress: ' . $limit * $currentPage);
             foreach ($importedProducts->getItems() as $product) {
-                if (!in_array($product->getSku(), $skuList)) {
-                    if ($product->getStatus() == Status::STATUS_ENABLED) {
-                        $this->disableProduct($product);
-                        $this->getReport()->increaseByNumber($this->report::KEY_STATUS_CHANGED_TO_DISABLED);
-                        $this->logger->info($product->getSku() . ' Not exists in feed. Updated status to disabled');
-                    } else {
-                        $this->logger->info($product->getSku() . ' Not exists in feed. Already disabled');
+                    if (!in_array($product->getSku(), $skuList)) {
+                        if ($product->getStatus() == Status::STATUS_ENABLED) {
+                            try {
+                                $this->disableProduct($product);
+                                $this->getReport()->increaseByNumber($this->report::KEY_STATUS_CHANGED_TO_DISABLED);
+                                $this->logger->info($product->getSku() . ' Not exists in feed. Updated status to disabled');
+                            } catch (\Throwable $t) {
+                                $errorMessage = $product->getSku() . ' Failed to disable old product.'
+                                    . ' Error: ' . $t->getMessage();
+                                $this->getReport()->addMessage($this->getReport()::KEY_ERRORS, $errorMessage);
+                                $this->logger->error($errorMessage . $t->getTraceAsString());
+                            }
+                        } else {
+                            $this->logger->info($product->getSku() . ' Not exists in feed. Already disabled');
+                        }
                     }
-                }
             }
             $currentPage++;
             $importedProducts = $this->getProductsBySourceCode($sourceCode, $limit, $currentPage, $sourceCodeFieldName);
