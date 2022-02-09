@@ -31,10 +31,10 @@ class CronInfoField extends \Magento\Config\Block\System\Config\Form\Field
     {
         $content = '<td>';
         if ($currentlyRunningJob = $this->magentoSchedulerService->getCurrentRunningJob(static::IMPORTER_JOB_CODE)) {
-            $content .= 'Import currently running. Started at ' . $currentlyRunningJob->getData('executed_at');
+            $content .= 'Import currently running. Started at ' . $currentlyRunningJob->getData('executed_at') . ' UTC';
         } else {
             if ($nextJob = $this->magentoSchedulerService->getNextJob(static::IMPORTER_JOB_CODE)) {
-                $content .= 'Scheduled at ' . $nextJob->getData('scheduled_at');
+                $content .= 'Scheduled at ' . $nextJob->getData('scheduled_at') . ' UTC';
                 $startNowUrl = $this->url->getUrl('sumkabumimporter/cronJob/scheduleNow', ['job_code' => static::IMPORTER_JOB_CODE]);
                 $content .= ' <button onclick="window.location.href = \'' . $startNowUrl . '\'; return false;">Schedule now</button></td>';
             } else {
