@@ -189,18 +189,23 @@ class ProductImage
         }
 
         // add images
-        foreach ($imagesToAdd as $imageToAdd) {
+        foreach ($imagesToAdd as $imageToAddKey => $imageToAdd) {
 
-            $imageLocalFullPath = $this->getImagesLocalDirPath() . $this->getFilenameFromUrl($imageToAdd->getUrl());
+            try {
+                $imageLocalFullPath = $this->getImagesLocalDirPath() . $this->getFilenameFromUrl($imageToAdd->getUrl());
 
-            if ($downloader = $imageToAdd->getDownloader()) {
-                $downloader->download($imageToAdd->getUrl(), $imageLocalFullPath);
-            } else {
-                $this->download($imageToAdd->getUrl(), $imageLocalFullPath, $imageToAdd->getUsername(), $imageToAdd->getPassword());
+                if ($downloader = $imageToAdd->getDownloader()) {
+                    $downloader->download($imageToAdd->getUrl(), $imageLocalFullPath);
+                } else {
+                    $this->download($imageToAdd->getUrl(), $imageLocalFullPath, $imageToAdd->getUsername(), $imageToAdd->getPassword());
+                }
+            } catch (\Throwable $t) {
+                $this->logger->error('Failed to download image. ' . $t->getMessage() . $t->getTraceAsString());
             }
 
             if (!$this->isValid($imageLocalFullPath)) {
                 $this->logger->info($product->getSku() . ' Invalid image. Url: ' . $imageToAdd->getUrl());
+                unset($imagesToAdd[$imageToAddKey]);
                 continue;
             }
 

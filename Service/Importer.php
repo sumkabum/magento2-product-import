@@ -193,6 +193,14 @@ class Importer
             && ($this->productService->isNewProduct($product) || $dataRow->catUpdateImagesIfProductExists)
         ) {
             $product = $this->productImageService->updateImages($product, $dataRow->images);
+            $existingImages = $product->getMediaGalleryEntries();
+            if ($dataRow->disableProductIfNoImages
+                && count($existingImages) <= 0
+                && $product->getStatus() == Status::STATUS_ENABLED
+            ) {
+                $this->productService->disableProduct($product);
+                $this->logger->info($product->getSku() . ' Disabling product because having no images');
+            }
         }
         return $product;
     }
