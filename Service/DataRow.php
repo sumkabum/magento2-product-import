@@ -32,4 +32,8 @@ class DataRow
      * @var bool
      */
     public $overwriteNeedsUpdatingIfIsParentAndChildrenDoesntNeedUpdate = true;
+    /**
+     * @var bool
+     */
+    public $disableProductIfNoImages = false;
 }
