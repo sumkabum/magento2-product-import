@@ -2,6 +2,7 @@
 
 namespace Sumkabum\Magento2ProductImport\Console;
 
+use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -13,13 +14,19 @@ class DisableProductsWithoutImages extends \Symfony\Component\Console\Command\Co
      * @var \Sumkabum\Magento2ProductImport\Service\DisableProductsWithoutImages
      */
     private $disableProductsWithoutImages;
+    /**
+     * @var LoggerInterface
+     */
+    private $logger;
 
     public function __construct(
         \Sumkabum\Magento2ProductImport\Service\DisableProductsWithoutImages $disableProductsWithoutImages,
+        LoggerInterface $logger,
         string $name = null
     ) {
         parent::__construct($name);
         $this->disableProductsWithoutImages = $disableProductsWithoutImages;
+        $this->logger = $logger;
     }
 
     protected function configure()
@@ -36,7 +43,9 @@ class DisableProductsWithoutImages extends \Symfony\Component\Console\Command\Co
     {
         $this->disableProductsWithoutImages->execute(
             $input->getOption(self::OPTION_DELETE_INSTEAD_DISABLE) ?? false,
-            $output
+            $output,
+            null,
+            $this->logger
         );
     }
 }
