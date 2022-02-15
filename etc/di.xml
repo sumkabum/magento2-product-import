@@ -1,0 +1,9 @@
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
+    <type name="Magento\Framework\Console\CommandListInterface">
+        <arguments>
+            <argument name="commands" xsi:type="array">
+                <item name="sumkabum_magento2productimport_console_disableproductswithoutimages" xsi:type="object">\Sumkabum\Magento2ProductImport\Console\DisableProductsWithoutImages</item>
+            </argument>
+        </arguments>
+    </type>
+</config>
