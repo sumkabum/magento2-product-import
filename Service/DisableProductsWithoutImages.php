@@ -100,6 +100,9 @@ class DisableProductsWithoutImages
             $progressBar->start();
         }
 
+        $productSkusToDelete = [];
+        $productSkusToDisable = [];
+
         while (count($products->getItems()) > 0) {
 
             foreach ($products->getItems() as $product) {
@@ -118,16 +121,9 @@ class DisableProductsWithoutImages
                         continue;
                     }
                     if ($deleteInsteadDisable) {
-                        $this->deleteProduct($product);
+                        $productSkusToDelete[] = $product->getSku();
                     } else {
-                        $this->disableProduct($product);
-                    }
-                    $message = $product->getSku() . ' Product ' . ($deleteInsteadDisable ? 'deleted' : 'disabled') . ' because having no images';
-                    if ($logger) {
-                        $logger->info($message);
-                    }
-                    if ($report) {
-                        $report->addMessage('Warning', $message);
+                        $productSkusToDisable[] = $product->getSku();
                     }
                 }
 
@@ -141,19 +137,76 @@ class DisableProductsWithoutImages
             $progressBar->finish();
             $output->writeln('');
         }
+
+        $totalProductsCountToHandle = count($productSkusToDelete) + count($productSkusToDisable);
+        if ($totalProductsCountToHandle == 0) {
+            $output->writeln('No products to handle');
+            return;
+        }
+
+        if ($output) {
+            $progressBar = new ProgressBar($output, count($productSkusToDelete) + count($productSkusToDisable));
+            $progressBar->setFormat(' %current%/%max% [%bar%] %percent:3s%% %elapsed:6s%/%estimated:-6s% %memory:6s%');
+            $progressBar->start();
+        }
+
+        foreach ($productSkusToDelete as $sku)
+        {
+            try {
+                $this->deleteProductBySKu($sku);
+                $message = $sku . ' Product deleted because having no images';
+                $this->logMessage($logger, $report, $message);
+            } catch (\Throwable $t) {
+                $this->logMessage($logger, $report, $sku . ' ' . $t->getMessage());
+            }
+            if ($output) $progressBar->advance();
+        }
+
+        foreach ($productSkusToDisable as $sku)
+        {
+            try {
+                $this->disableProductBySKu($sku);
+                $message = $sku . ' Product disabled because having no images';
+                $this->logMessage($logger, $report, $message);
+            } catch (\Throwable $t) {
+                $this->logMessage($logger, $report, $sku . ' ' . $t->getMessage());
+            }
+            if ($output) $progressBar->advance();
+        }
+        if ($output) {
+            $progressBar->finish();
+            $output->writeln('');
+        }
     }
 
-    private function disableProduct(Product $product)
+    private function logMessage($logger, $report, $message)
     {
+        if ($logger) {
+            $logger->info($message);
+        }
+        if ($report) {
+            $report->addMessage('Warning', $message);
+        }
+    }
+
+    /**
+     * @throws \Magento\Framework\Exception\NoSuchEntityException
+     */
+    private function disableProductBySKu(string $sku)
+    {
+        $product = $this->productRepository->get($sku);
         $this->productAction->updateAttributes([$product->getEntityId()], ['status' => Product\Attribute\Source\Status::STATUS_DISABLED], 0);
     }
 
     /**
+     * @param string $sku
+     * @return void
+     * @throws \Magento\Framework\Exception\NoSuchEntityException
      * @throws \Magento\Framework\Exception\StateException
      */
-    private function deleteProduct(Product $product)
+    private function deleteProductBySKu(string $sku)
     {
-        $this->productRepository->delete($product);
+        $this->productRepository->deleteById($sku);
     }
 
     public function getProducts(int $limit, int $currentPage = 1, ?string $filterField = null, ?string $filterValue = null): \Magento\Catalog\Api\Data\ProductSearchResultsInterface
