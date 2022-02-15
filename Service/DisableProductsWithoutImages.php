@@ -50,10 +50,6 @@ class DisableProductsWithoutImages
      */
     private $objectManager;
     /**
-     * @var LoggerInterface
-     */
-    private $logger;
-    /**
      * @var ProductAction
      */
     private $productAction;
@@ -70,7 +66,6 @@ class DisableProductsWithoutImages
         \Magento\Catalog\Model\Product\Gallery\ReadHandler $galleryReaderHandler,
         DirectoryList $directoryList,
         ObjectManagerInterface $objectManager,
-        LoggerInterface $logger,
         \Magento\Catalog\Model\Product\Action $productAction,
         \Magento\Framework\Registry $registry
     ) {
@@ -81,7 +76,6 @@ class DisableProductsWithoutImages
         $this->galleryReaderHandler = $galleryReaderHandler;
         $this->directoryList = $directoryList;
         $this->objectManager = $objectManager;
-        $this->logger = $logger;
         $this->productAction = $productAction;
         $this->registry = $registry;
     }
@@ -90,7 +84,7 @@ class DisableProductsWithoutImages
      * @throws FileSystemException
      * @throws \Magento\Framework\Exception\LocalizedException
      */
-    public function execute(bool $deleteInsteadDisable = false, ?OutputInterface $output = null)
+    public function execute(bool $deleteInsteadDisable = false, ?OutputInterface $output = null, ?Report $report = null, ?LoggerInterface $logger = null, ?string $filterField = null, ?string $filterValue = null)
     {
         $limit = 500;
         $currentPage = 1;
@@ -98,7 +92,7 @@ class DisableProductsWithoutImages
         if ($deleteInsteadDisable) {
             $this->registry->register('isSecureArea', true);
         }
-        $products = $this->getProducts($limit, $currentPage);
+        $products = $this->getProducts($limit, $currentPage, $filterField, $filterValue);
 
         if ($output) {
             $progressBar = new ProgressBar($output, $products->getTotalCount());
@@ -128,13 +122,19 @@ class DisableProductsWithoutImages
                     } else {
                         $this->disableProduct($product);
                     }
-                    $this->logger->info($product->getSku() . ' Product ' . ($deleteInsteadDisable ? 'deleted' : 'disabled') . ' because having no images');
+                    $message = $product->getSku() . ' Product ' . ($deleteInsteadDisable ? 'deleted' : 'disabled') . ' because having no images';
+                    if ($logger) {
+                        $logger->info($message);
+                    }
+                    if ($report) {
+                        $report->addMessage('Warning', $message);
+                    }
                 }
 
                 if ($output) $progressBar->advance();
             }
 
-            $products = $this->getProducts($limit, ++$currentPage);
+            $products = $this->getProducts($limit, ++$currentPage, $filterField, $filterValue);
         }
 
         if ($output) {
@@ -156,14 +156,20 @@ class DisableProductsWithoutImages
         $this->productRepository->delete($product);
     }
 
-    public function getProducts(int $limit, int $currentPage = 1): \Magento\Catalog\Api\Data\ProductSearchResultsInterface
+    public function getProducts(int $limit, int $currentPage = 1, ?string $filterField = null, ?string $filterValue = null): \Magento\Catalog\Api\Data\ProductSearchResultsInterface
     {
         $this->setAreaCode();
 
-        $searchCriteria = $this->searchCriteriaBuilder
+        $searchCriteriaBuilder = $this->searchCriteriaBuilder
             ->setCurrentPage($currentPage)
             ->setPageSize($limit)
-            ->create();
+        ;
+
+        if (!empty($filterField) && !empty($filterValue)) {
+            $searchCriteriaBuilder->addFilter($filterField, $filterValue);
+        }
+
+        $searchCriteria = $searchCriteriaBuilder->create();
 
         $productList = $this->productRepository->getList($searchCriteria);
 
