@@ -139,7 +139,7 @@ class DisableProductsWithoutImages
         }
 
         $totalProductsCountToHandle = count($productSkusToDelete) + count($productSkusToDisable);
-        if ($totalProductsCountToHandle == 0) {
+        if ($output && $totalProductsCountToHandle == 0) {
             $output->writeln('No products to handle');
             return;
         }
