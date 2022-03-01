@@ -349,7 +349,7 @@ class Importer
      * @param DataRow[] $dataRows
      * @return DataRow[]
      */
-    private function getSimpleProductsForConfigurable($configurableSku, array $dataRows): array
+    public function getSimpleProductsForConfigurable($configurableSku, array $dataRows): array
     {
         $childProducts = [];
 
