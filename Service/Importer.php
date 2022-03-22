@@ -124,6 +124,7 @@ class Importer
                 }
 
                 if (!$configurableDataRow->needsUpdatingInMagento && !$someOfChildrenNeedUpdating) {
+                    $this->report->increaseByNumber($this->report::KEY_PRODUCTS_DIDNT_NEED_UPDATING, count($simpleProductDataRows)+1);
                     continue;
                 }
 
@@ -157,9 +158,13 @@ class Importer
                 $this->logger->info('progress non-configurable: ' . $i . ' of ' . $count);
             }
 
+            if (!$notConfigurableDataRow->needsUpdatingInMagento) {
+                $this->report->increaseByNumber($this->report::KEY_PRODUCTS_DIDNT_NEED_UPDATING);
+                continue;
+            }
+
             try {
                 $simpleProduct = $this->saveProduct($notConfigurableDataRow, $doNotUpdateFields);
-                $this->report->increaseByNumber($this->report::KEY_PRODUCTS_UPDATED);
                 $this->updateImages($simpleProduct, $notConfigurableDataRow);
             } catch (Exception $e) {
                 $this->logger->error($notConfigurableDataRow->mappedDataFields['sku'] . ' Failed to save! ' . $e->getMessage() . $e->getTraceAsString());
