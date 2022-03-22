@@ -106,18 +106,25 @@ class Importer
             try {
                 $simpleProductDataRows = $this->getSimpleProductsForConfigurable($configurableDataRow->mappedDataFields['sku'], $dataRows);
 
+                $someOfChildrenNeedUpdating = false;
+                foreach ($simpleProductDataRows as $simpleProductDataRow) {
+                    if ($simpleProductDataRow->needsUpdatingInMagento) {
+                        $someOfChildrenNeedUpdating = true;
+                        break;
+                    }
+                }
+
                 if (
                     $this->productService->productExists($configurableDataRow->mappedDataFields['sku'])
                     && $configurableDataRow->needsUpdatingInMagento
                     && $configurableDataRow->overwriteNeedsUpdatingIfIsParentAndChildrenDoesntNeedUpdate
+                    && !$someOfChildrenNeedUpdating
                 ) {
                     $configurableDataRow->needsUpdatingInMagento = false;
-                    foreach ($simpleProductDataRows as $simpleProductDataRow) {
-                        if ($simpleProductDataRow->needsUpdatingInMagento) {
-                            $configurableDataRow->needsUpdatingInMagento = true;
-                            break;
-                        }
-                    }
+                }
+
+                if (!$configurableDataRow->needsUpdatingInMagento && !$someOfChildrenNeedUpdating) {
+                    continue;
                 }
 
                 $configurableProduct = $this->saveProduct($configurableDataRow, $doNotUpdateFields);
