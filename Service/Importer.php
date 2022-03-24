@@ -32,18 +32,28 @@ class Importer
     private $report;
 
     private $objectManager;
+    /**
+     * @var []DataRow[]
+     */
+    private $childDataRowsByConfigurableSku = [];
+    /**
+     * @var ProductCollectionCache
+     */
+    private $productCollectionCache;
 
     public function __construct(
         \Sumkabum\Magento2ProductImport\Service\Magento\Product $productService,
         ProductImage $productImageService,
         Logger $logger,
-        ObjectManagerInterface $objectManager
+        ObjectManagerInterface $objectManager,
+        ProductCollectionCache $productCollectionCache
     ) {
 
         $this->productService = $productService;
         $this->productImageService = $productImageService;
         $this->logger = $logger;
         $this->objectManager = $objectManager;
+        $this->productCollectionCache = $productCollectionCache;
     }
 
     /**
@@ -115,7 +125,7 @@ class Importer
                 }
 
                 if (
-                    $this->productService->productExists($configurableDataRow->mappedDataFields['sku'])
+                    $this->productCollectionCache->getProductData($configurableDataRow->mappedDataFields['sku'])
                     && $configurableDataRow->needsUpdatingInMagento
                     && $configurableDataRow->overwriteNeedsUpdatingIfIsParentAndChildrenDoesntNeedUpdate
                     && !$someOfChildrenNeedUpdating
@@ -263,19 +273,14 @@ class Importer
                 }
             }
 
-
             // find first child
-            foreach ($dataRows as $firstChildDataRow) {
-                if ($firstChildDataRow->parentSku != $configurableSku) {
-                    continue;
-                }
-
+            $firstChildDataRow = $this->childDataRowsByConfigurableSku[$configurableSku][0] ?? null;
+            if ($firstChildDataRow) {
                 if (!count($configurableDataRow->images)) {
                     foreach ($firstChildDataRow->images as $dataRowImage) {
                         $configurableDataRow->images[] = $dataRowImage;
                     }
                 }
-
 
                 foreach ($fieldsToCopyFromSimpleToConfigurable as $fieldToCopy) {
                     if (!array_key_exists($fieldToCopy, $firstChildDataRow->mappedDataFields)) {
@@ -300,7 +305,6 @@ class Importer
                     }
                     $configurableDataRow->mappedDataFields['url_key'] = $configurableDataRow->mappedDataFields['name'] . '-' . $configurableDataRow->mappedDataFields['sku'];
                 }
-                break;
             }
 
             $configurableDataRows[$configurableDataRow->mappedDataFields['sku']] = $configurableDataRow;
@@ -363,14 +367,13 @@ class Importer
      */
     public function getSimpleProductsForConfigurable($configurableSku, array $dataRows): array
     {
-        $childProducts = [];
-
-        foreach ($dataRows as $dataRow) {
-            if ($dataRow->parentSku == $configurableSku) {
-                $childProducts[] = $dataRow;
+        if (count($this->childDataRowsByConfigurableSku) == 0) {
+            foreach ($dataRows as $dataRow) {
+                $this->childDataRowsByConfigurableSku[$dataRow->parentSku][] = $dataRow;
             }
         }
-        return $childProducts;
+
+        return $this->childDataRowsByConfigurableSku[$configurableSku];
     }
 
     /**
