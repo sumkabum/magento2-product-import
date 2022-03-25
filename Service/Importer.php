@@ -274,7 +274,7 @@ class Importer
             }
 
             // find first child
-            $firstChildDataRow = $this->childDataRowsByConfigurableSku[$configurableSku][0] ?? null;
+            $firstChildDataRow = $this->getSimpleProductsForConfigurable($configurableSku, $dataRows)[0] ?? null;
             if ($firstChildDataRow) {
                 if (!count($configurableDataRow->images)) {
                     foreach ($firstChildDataRow->images as $dataRowImage) {
@@ -365,7 +365,7 @@ class Importer
      * @param DataRow[] $dataRows
      * @return DataRow[]
      */
-    public function getSimpleProductsForConfigurable($configurableSku, array $dataRows): array
+    public function getSimpleProductsForConfigurable($configurableSku, array $dataRows): ?array
     {
         if (count($this->childDataRowsByConfigurableSku) == 0) {
             foreach ($dataRows as $dataRow) {
@@ -373,7 +373,7 @@ class Importer
             }
         }
 
-        return $this->childDataRowsByConfigurableSku[$configurableSku];
+        return $this->childDataRowsByConfigurableSku[$configurableSku] ?? null;
     }
 
     /**
