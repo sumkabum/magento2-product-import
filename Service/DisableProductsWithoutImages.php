@@ -95,15 +95,18 @@ class DisableProductsWithoutImages
         $products = $this->getProducts($limit, $currentPage, $filterField, $filterValue);
 
         if ($output) {
-            $progressBar = new ProgressBar($output, $products->getTotalCount());
+            $progressBar = new ProgressBar($output, $products->getSize());
             $progressBar->setFormat(' %current%/%max% [%bar%] %percent:3s%% %elapsed:6s%/%estimated:-6s% %memory:6s%');
             $progressBar->start();
+        }
+        if ($logger) {
+            $logger->info('products to scan: ' . $products->getSize());
         }
 
         $productSkusToDelete = [];
         $productSkusToDisable = [];
 
-        while (count($products->getItems()) > 0) {
+        while ($products) {
 
             foreach ($products->getItems() as $product) {
                 /** @var Product $product */
@@ -136,6 +139,10 @@ class DisableProductsWithoutImages
         if ($output) {
             $progressBar->finish();
             $output->writeln('');
+            $output->writeln('count delete: ' . count($productSkusToDelete) . ' disable: ' . count($productSkusToDisable));
+        }
+        if ($logger) {
+            $logger->info('count delete: ' . count($productSkusToDelete) . ' disable: ' . count($productSkusToDisable));
         }
 
         $totalProductsCountToHandle = count($productSkusToDelete) + count($productSkusToDisable);
@@ -209,29 +216,23 @@ class DisableProductsWithoutImages
         $this->productRepository->deleteById($sku);
     }
 
-    public function getProducts(int $limit, int $currentPage = 1, ?string $filterField = null, ?string $filterValue = null): \Magento\Catalog\Api\Data\ProductSearchResultsInterface
+    public function getProducts(int $limit, int $currentPage = 1, ?string $filterField = null, ?string $filterValue = null): ?\Magento\Catalog\Model\ResourceModel\Product\Collection
     {
-        $this->setAreaCode();
-
-        $searchCriteriaBuilder = $this->searchCriteriaBuilder
-            ->setCurrentPage($currentPage)
-            ->setPageSize($limit)
-        ;
+        /** @var \Magento\Catalog\Model\ResourceModel\Product\Collection $collection */
+        $collection = $this->objectManager->create(\Magento\Catalog\Model\ResourceModel\Product\Collection::class);
 
         if (!empty($filterField) && !empty($filterValue)) {
-            $searchCriteriaBuilder->addFilter($filterField, $filterValue);
+            $collection->addAttributeToFilter($filterField, ['eq' => $filterValue]);
         }
 
-        $searchCriteria = $searchCriteriaBuilder->create();
-
-        $productList = $this->productRepository->getList($searchCriteria);
+        $collection->setPage($currentPage, $limit);
 
         // fix magento last $currentPage bug
-        if ((($currentPage-1) * $limit) > $productList->getTotalCount()) {
-            return $this->objectManager->create(\Magento\Catalog\Api\Data\ProductSearchResultsInterface::class);
+        if ($currentPage > $collection->getLastPageNumber()) {
+            return null;
         }
 
-        return $productList;
+        return $collection;
     }
 
     public function setAreaCode(): void
