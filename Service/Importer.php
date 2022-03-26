@@ -365,7 +365,7 @@ class Importer
      * @param DataRow[] $dataRows
      * @return DataRow[]
      */
-    public function getSimpleProductsForConfigurable($configurableSku, array $dataRows): ?array
+    public function getSimpleProductsForConfigurable($configurableSku, array $dataRows): array
     {
         if (count($this->childDataRowsByConfigurableSku) == 0) {
             foreach ($dataRows as $dataRow) {
@@ -373,7 +373,7 @@ class Importer
             }
         }
 
-        return $this->childDataRowsByConfigurableSku[$configurableSku] ?? null;
+        return $this->childDataRowsByConfigurableSku[$configurableSku] ?? [];
     }
 
     /**
