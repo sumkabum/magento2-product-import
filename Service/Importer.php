@@ -214,7 +214,7 @@ class Importer
         if ($dataRow->needsUpdatingInMagento
             && ($this->productService->isNewProduct($product) || $dataRow->catUpdateImagesIfProductExists)
         ) {
-            $product = $this->productImageService->updateImages($product, $dataRow->images);
+            $product = $this->productImageService->updateImages($product, $dataRow->images, $dataRow->removeTmpImages);
             $existingImages = $product->getMediaGalleryEntries();
             if ($dataRow->disableProductIfNoImages
                 && count($existingImages) <= 0

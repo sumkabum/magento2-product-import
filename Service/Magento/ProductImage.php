@@ -128,7 +128,7 @@ class ProductImage
      * @throws StateException
      * @throws Exception
      */
-    public function updateImages(\Magento\Catalog\Model\Product $product, array $images)
+    public function updateImages(\Magento\Catalog\Model\Product $product, array $images, $removeTmpImage = true)
     {
         $this->emulation->startEnvironmentEmulation(0, 'adminhtml');
 
@@ -210,7 +210,7 @@ class ProductImage
             }
 
             try {
-                $product->addImageToMediaGallery($imageLocalFullPath, null, true, false);
+                $product->addImageToMediaGallery($imageLocalFullPath, null, $removeTmpImage, false);
                 $this->logger->info($product->getSku() . ' adding image: ' . $imageToAdd->getUrl());
                 $this->report->increaseByNumber($this->report::KEY_IMAGES_ADDED);
 

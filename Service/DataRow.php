@@ -36,4 +36,8 @@ class DataRow
      * @var bool
      */
     public $disableProductIfNoImages = false;
+    /**
+     * @var bool 
+     */
+    public $removeTmpImages = true;
 }
