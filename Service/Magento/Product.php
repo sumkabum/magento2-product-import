@@ -190,6 +190,9 @@ class Product
 
         if (count($storeBasedAttributeValuesArray) > 0) {
             foreach ($storeBasedAttributeValuesArray as $storeBasedAttributeValues) {
+                if (isset($storeBasedAttributeValues->mappedDataFields['url_key'])) {
+                    $storeBasedAttributeValues->mappedDataFields['url_key'] = $this->urlKeyService->generateUrlKey($storeBasedAttributeValues->mappedDataFields['url_key']);
+                }
                 $this->updateStoreBasedAttributeValue(
                     [$product->getId()],
                     $storeBasedAttributeValues->mappedDataFields,
