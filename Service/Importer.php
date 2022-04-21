@@ -307,6 +307,16 @@ class Importer
                 }
             }
 
+            foreach ($configurableDataRow->storeBasedAttributeValuesArray as $storeBasedAttributeValue) {
+                if (
+                    !empty($storeBasedAttributeValue->mappedDataFields['name']) &&
+                    !empty($configurableDataRow->mappedDataFields['sku']) &&
+                    !isset($storeBasedAttributeValue->mappedDataFields['url_key'])
+                ) {
+                    $storeBasedAttributeValue->mappedDataFields['url_key'] = $storeBasedAttributeValue->mappedDataFields['name'] . '-' . $configurableDataRow->mappedDataFields['sku'];
+                }
+            }
+
             $configurableDataRows[$configurableDataRow->mappedDataFields['sku']] = $configurableDataRow;
         }
 

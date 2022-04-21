@@ -198,6 +198,10 @@ class Product
                     $storeBasedAttributeValues->mappedDataFields,
                     $storeBasedAttributeValues->storeId
                 );
+                if (!empty($storeBasedAttributeValues->mappedDataFields['url_key']) && $this->isNewProduct($product)) {
+                    $this->urlKeyService->regenerateUrlRewritesForStoreId($product, $storeBasedAttributeValues->storeId, $storeBasedAttributeValues->mappedDataFields['url_key']);
+                    $this->logger->info($product->getSku() . ' url rewrites are regenerated for storeId: ' . $storeBasedAttributeValues->storeId);
+                }
             }
         }
 

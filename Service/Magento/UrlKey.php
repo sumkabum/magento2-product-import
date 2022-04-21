@@ -133,17 +133,24 @@ class UrlKey
     public function regenerateUrlRewrites(\Magento\Catalog\Model\Product $product)
     {
         foreach ($this->storeManager->getStores() as $store) {
-            $tmpProduct = clone $product;
-            $tmpProduct->setStoreId($store->getId());
-
-            $this->urlPersist->deleteByData([
-                UrlRewrite::ENTITY_ID => $product->getId(),
-                UrlRewrite::ENTITY_TYPE => ProductUrlRewriteGenerator::ENTITY_TYPE,
-            ]);
-
-            $this->urlPersist->replace(
-                $this->productUrlRewriteGenerator->generate($tmpProduct)
-            );
+            $this->regenerateUrlRewritesForStoreId($product, $store->getId());
         }
+    }
+
+    /**
+     * @param \Magento\Catalog\Model\Product $product
+     * @throws UrlAlreadyExistsException
+     */
+    public function regenerateUrlRewritesForStoreId(\Magento\Catalog\Model\Product $product, $storeId, $urlKey = null)
+    {
+        $tmpProduct = clone $product;
+        $tmpProduct->setStoreId($storeId);
+        if (!empty($urlKey)) {
+            $tmpProduct->setUrlKey($urlKey);
+        }
+
+        $this->urlPersist->replace(
+            $this->productUrlRewriteGenerator->generate($tmpProduct)
+        );
     }
 }
