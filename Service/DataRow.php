@@ -40,4 +40,8 @@ class DataRow
      * @var bool 
      */
     public $removeTmpImages = true;
+    /**
+     * @var ProductLink[]
+     */
+    public $productLinks = [];
 }

@@ -61,7 +61,7 @@ class ProductCollectionCache
 
     private $cachedProducts = [];
 
-    public function getProductData(string $sku, array $attributeCodes = []): ?array
+    public function getProductData(string $sku, array $attributeCodes = ['sku', 'entity_id']): ?array
     {
         $cacheKey = implode('-', $attributeCodes);
         if (empty($cacheKey)) {
@@ -88,6 +88,11 @@ class ProductCollectionCache
             }
         }
         return $this->cachedProducts[$cacheKey][$sku] ?? null;
+    }
+
+    public function clearCache()
+    {
+        $this->cachedProducts = [];
     }
 
     private function getProductCollection(int $limit, int $currentPage = 1, array $attributesToSelect = []): ?\Magento\Catalog\Model\ResourceModel\Product\Collection

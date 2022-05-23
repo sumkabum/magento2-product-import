@@ -2,6 +2,8 @@
 namespace Sumkabum\Magento2ProductImport\Service;
 
 use Exception;
+use Magento\Catalog\Api\Data\ProductInterface;
+use Magento\Catalog\Api\ProductLinkRepositoryInterface;
 use Magento\Catalog\Model\Product;
 use Magento\Catalog\Model\Product\Attribute\Source\Status;
 use Magento\Catalog\Model\Product\Type;
@@ -181,6 +183,61 @@ class Importer
                 $this->report->addMessage($this->report::KEY_ERRORS, $notConfigurableDataRow->mappedDataFields['sku'] . ' ' . $e->getMessage());
             }
         }
+
+        $this->logger->info('Start updating product links');
+        $this->removeInvalidProductLinks($dataRows);
+        $i = 0;
+        foreach ($dataRows as $dataRow) {
+            $i++;
+            if ($i % 10 == 0) {
+                $this->logger->info('progress update product links: ' . $i . ' of ' . $count);
+            }
+            $this->updateProductLinks($dataRow);
+        }
+    }
+
+    /**
+     * @param DataRow[] $dataRows
+     * @return void
+     */
+    public function removeInvalidProductLinks(array $dataRows)
+    {
+        $this->productCollectionCache->clearCache();
+        foreach ($dataRows as $dataRow) {
+            foreach ($dataRow->productLinks as $key => $productLink) {
+                if (!$this->productCollectionCache->getProductData($productLink->getLinkSku())) {
+                    unset($dataRow->productLinks[$key]);
+                    $message = $dataRow->mappedDataFields['sku'] . ' removing sku: ' . $productLink->getLinkSku() . ' from links because product not exists.';
+                    $this->logger->info($message);
+                    $this->getReport()->addMessage('Warning', $message);
+                }
+            }
+        }
+    }
+
+    public function updateProductLinks(DataRow $dataRow)
+    {
+        if (!$dataRow->needsUpdatingInMagento) return;
+
+        $importProductLinks = [];
+        foreach ($dataRow->productLinks as $productLink) {
+            /** @var  \Magento\Catalog\Api\Data\ProductLinkInterface $magentoProductLink */
+            $magentoProductLink = $this->objectManager->create(\Magento\Catalog\Api\Data\ProductLinkInterface::class);
+            $magentoProductLink
+                ->setSku($dataRow->mappedDataFields['sku'])
+                ->setLinkedProductSku($productLink->getLinkSku())
+                ->setLinkType($productLink->getType());
+            $importProductLinks[] = $magentoProductLink;
+        }
+
+        /** @var \Magento\Catalog\Model\Product\Link\SaveHandler $productLinkSaveHandler */
+        $productLinkSaveHandler = $this->objectManager->get(\Magento\Catalog\Model\Product\Link\SaveHandler::class);
+        /** @var Product $product */
+        $product = $this->objectManager->create(ProductInterface::class);
+        $product->setSku($dataRow->mappedDataFields['sku']);
+        $product->setEntityId($this->productCollectionCache->getProductData($dataRow->mappedDataFields['sku'])['entity_id']);
+        $product->setProductLinks($importProductLinks);
+        $productLinkSaveHandler->execute(\Magento\Catalog\Api\Data\ProductInterface::class, $product);
     }
 
     /**
