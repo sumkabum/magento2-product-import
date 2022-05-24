@@ -401,7 +401,15 @@ class Product
         }
     }
 
-    public function getOldProductsToDisable(string $sourceCode, array $validSkuList, int $limit, int $currentPage = 1, $sourceCodeFieldName = 'source_code'): \Magento\Catalog\Api\Data\ProductSearchResultsInterface
+    /**
+     * @param string $sourceCode
+     * @param array $validSkuList
+     * @param int $limit
+     * @param int $currentPage
+     * @param $sourceCodeFieldName
+     * @return \Magento\Catalog\Api\Data\ProductSearchResultsInterface
+     */
+    public function getOldProductsToDisable(string $sourceCode, array $validSkuList, int $limit, int $currentPage = 1, $sourceCodeFieldName = 'source_code')
     {
         $this->setAreaCode();
 
@@ -423,7 +431,13 @@ class Product
         return $productList;
     }
 
-    public function getProductsBySkuList(array $skuList, int $limit, int $currentPage = 1): \Magento\Catalog\Api\Data\ProductSearchResultsInterface
+    /**
+     * @param array $skuList
+     * @param int $limit
+     * @param int $currentPage
+     * @return \Magento\Catalog\Api\Data\ProductSearchResultsInterface
+     */
+    public function getProductsBySkuList(array $skuList, int $limit, int $currentPage = 1)
     {
         $this->setAreaCode();
 
