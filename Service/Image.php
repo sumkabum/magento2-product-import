@@ -8,7 +8,30 @@ class Image
      * @var string
      */
     private $url;
-
+    /**
+     * @var string|null
+     */
+    private $label;
+    /**
+     * @var bool
+     */
+    private $isBaseImage = false;
+    /**
+     * @var bool
+     */
+    private $isSmallImage = false;
+    /**
+     * @var bool
+     */
+    private $isThumbnail = false;
+    /**
+     * @var bool
+     */
+    private $isSwatchImage = false;
+    /**
+     * @var int|null
+     */
+    private $position;
     /**
      * @var string
      */
@@ -36,6 +59,114 @@ class Image
     public function setUrl($url): self
     {
         $this->url = $url;
+        return $this;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getLabel(): ?string
+    {
+        return $this->label;
+    }
+
+    /**
+     * @param string|null $label
+     * @return Image
+     */
+    public function setLabel(?string $label): Image
+    {
+        $this->label = $label;
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isBaseImage(): bool
+    {
+        return $this->isBaseImage;
+    }
+
+    /**
+     * @param bool $isBaseImage
+     * @return Image
+     */
+    public function setIsBaseImage(bool $isBaseImage): Image
+    {
+        $this->isBaseImage = $isBaseImage;
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isSmallImage(): bool
+    {
+        return $this->isSmallImage;
+    }
+
+    /**
+     * @param bool $isSmallImage
+     * @return Image
+     */
+    public function setIsSmallImage(bool $isSmallImage): Image
+    {
+        $this->isSmallImage = $isSmallImage;
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isThumbnail(): bool
+    {
+        return $this->isThumbnail;
+    }
+
+    /**
+     * @param bool $isThumbnail
+     * @return Image
+     */
+    public function setIsThumbnail(bool $isThumbnail): Image
+    {
+        $this->isThumbnail = $isThumbnail;
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isSwatchImage(): bool
+    {
+        return $this->isSwatchImage;
+    }
+
+    /**
+     * @param bool $isSwatchImage
+     * @return Image
+     */
+    public function setIsSwatchImage(bool $isSwatchImage): Image
+    {
+        $this->isSwatchImage = $isSwatchImage;
+        return $this;
+    }
+
+    /**
+     * @return int|null
+     */
+    public function getPosition(): ?int
+    {
+        return $this->position;
+    }
+
+    /**
+     * @param int|null $position
+     * @return Image
+     */
+    public function setPosition(?int $position): Image
+    {
+        $this->position = $position;
         return $this;
     }
 

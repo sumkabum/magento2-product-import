@@ -184,7 +184,6 @@ class Importer
             }
         }
 
-        $this->logger->info('Start updating product links');
         $this->removeInvalidProductLinks($dataRows);
         $i = 0;
         foreach ($dataRows as $dataRow) {

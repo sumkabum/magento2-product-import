@@ -226,14 +226,34 @@ class ProductImage
 
         if (!empty($imagesToAdd) || !empty($imagesToDelete) || $this->someThumbnailsMissing($product) && (count($images) > 0)) {
             $firstImage = reset($images) ? reset($images) : null;
-            $this->updateThumbnails($product, $firstImage);
+            $this->updateThumbnails($product, $images);
             $this->updateImagesPositions($product, $images);
+            $this->updateImageLabels($product, $images);
             $product = $this->productRepository->save($product);
         }
 
         $this->emulation->stopEnvironmentEmulation();
 
         return $product;
+    }
+
+    /**
+     * @param \Magento\Catalog\Model\Product $product
+     * @param Image[] $images
+     * @return void
+     */
+    public function updateImageLabels(\Magento\Catalog\Model\Product $product, array $images)
+    {
+        $existingMediaGalleryEntries = $product->getMediaGalleryEntries();
+        foreach ($existingMediaGalleryEntries as $entry) {
+            foreach ($images as $image) {
+                if ($this->areTheFilenamesSame($entry->getFile(), $this->getFilenameFromUrl($image->getUrl()))) {
+                    $entry->setLabel($image->getLabel());
+                }
+            }
+        }
+
+        $product->setMediaGalleryEntries($existingMediaGalleryEntries);
     }
 
     /**
@@ -262,25 +282,31 @@ class ProductImage
 
     /**
      * @param \Magento\Catalog\Model\Product $product
-     * @param Image|null $image
+     * @param Image[] $images
      * @throws LocalizedException
      */
-    public function updateThumbnails(\Magento\Catalog\Model\Product $product, ?Image $image)
+    public function updateThumbnails(\Magento\Catalog\Model\Product $product, array $images)
     {
         $this->galleryReadHandler->execute($product);
         $mediaGalleryEntries = $product->getMediaGalleryEntries();
 
-        $thumbnailImageName = '';
-
         foreach ($mediaGalleryEntries as $existingImage) {
-            if ($image && $this->areTheFilenamesSame($existingImage->getFile(), $this->getFilenameFromUrl($image->getUrl()))) {
-                $thumbnailImageName = $existingImage->getFile();
-                break;
+            foreach ($images as $image) {
+                if ($image && $this->areTheFilenamesSame($existingImage->getFile(), $this->getFilenameFromUrl($image->getUrl()))) {
+                    if ($image->isBaseImage()) {
+                        $product->setData('image', $existingImage->getFile());
+                    }
+                    if ($image->isSmallImage()) {
+                        $product->setData('small_image', $existingImage->getFile());
+                    }
+                    if ($image->isThumbnail()) {
+                        $product->setData('thumbnail', $existingImage->getFile());
+                    }
+                    if ($image->isSwatchImage()) {
+                        $product->setData('swatch_image', $existingImage->getFile());
+                    }
+                }
             }
-        }
-
-        foreach (['image', 'small_image', 'thumbnail', 'swatch_image'] as $attrName) {
-            $product->setData($attrName, $thumbnailImageName);
         }
     }
 
@@ -297,7 +323,7 @@ class ProductImage
         foreach ($mediaGalleryEntries as $existingImage) {
             foreach ($images as $position => $image) {
                 if ($this->areTheFilenamesSame($existingImage->getFile(), $this->getFilenameFromUrl($image->getUrl()))) {
-                    $this->imageProcessor->updateImage($product, $existingImage->getFile(), ['position' => $position]);
+                    $this->imageProcessor->updateImage($product, $existingImage->getFile(), ['position' => $image->getPosition()]);
                     break;
                 }
             }
@@ -361,6 +387,8 @@ class ProductImage
         if (!$fh) {
             throw new Exception('Failed to create file handler for ' . $imageUrl);
         }
+
+        $imageUrl = str_replace(' ', '%20', $imageUrl);
 
         $ch = curl_init($imageUrl);
         curl_setopt($ch, CURLOPT_FILE, $fh);
