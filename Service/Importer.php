@@ -191,7 +191,13 @@ class Importer
             if ($i % 10 == 0) {
                 $this->logger->info('progress update product links: ' . $i . ' of ' . $count);
             }
-            $this->updateProductLinks($dataRow);
+            try {
+                $this->updateProductLinks($dataRow);
+            } catch (\Exception $e) {
+                $message = $dataRow->mappedDataFields['sku'] . ' Error when adding product links: ' . $e->getMessage();
+                $this->logger->info($message . $e->getTraceAsString());
+                $this->getReport()->addMessage('Warning', $message);
+            }
         }
     }
 
