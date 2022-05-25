@@ -270,9 +270,10 @@ class ProductImage
         $sourceFilename = str_replace('.jpeg', '.jpg', $sourceFilename);
         $magentoFilename = str_replace('.jpeg', '.jpg', $magentoFilename);
         $sourceFilePathInfo = pathinfo($sourceFilename);
+        $magentoFilenameExtension = pathinfo($magentoFilename, PATHINFO_EXTENSION);
 
         $magentoFilename = $this->replaceLastMatch('/' . $sourceFilePathInfo['filename'], '/', $magentoFilename);
-        $magentoFilename = str_replace('.' . strtolower($sourceFilePathInfo['extension']), '', $magentoFilename);
+        $magentoFilename = str_replace('.' . strtolower($magentoFilenameExtension), '', $magentoFilename);
 
         $magentoFilename = preg_replace('/(_\d+)+/', '', $magentoFilename);
         $magentoFilename = preg_replace('/\/.\/.\//', '', $magentoFilename);
