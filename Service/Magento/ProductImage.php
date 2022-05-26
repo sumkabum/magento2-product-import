@@ -130,6 +130,14 @@ class ProductImage
      */
     public function updateImages(\Magento\Catalog\Model\Product $product, array $images, $removeTmpImage = true)
     {
+        foreach ($images as $key => $image) {
+            if (!$this->isUrlValid($image->getUrl())) {
+                unset($images[$key]);
+                $message = $product->getSku() . ' invalid image url: ' . $image->getUrl();
+                $this->getLogger()->error($message);
+                $this->getReport()->addMessage($this->getReport()::KEY_ERRORS, $message);
+            }
+        }
         $this->emulation->startEnvironmentEmulation(0, 'adminhtml');
 
         $this->galleryReadHandler->execute($product);
@@ -204,7 +212,9 @@ class ProductImage
             }
 
             if (!$this->isValid($imageLocalFullPath)) {
-                $this->logger->info($product->getSku() . ' Invalid image. Url: ' . $imageToAdd->getUrl());
+                $message = $product->getSku() . ' Invalid image. Url: ' . $imageToAdd->getUrl();
+                $this->getReport()->addMessage($this->getReport()::KEY_ERRORS, $message);
+                $this->logger->info($message);
                 unset($imagesToAdd[$imageToAddKey]);
                 continue;
             }
@@ -421,4 +431,8 @@ class ProductImage
         return str_replace('.', '', $pathInfo['filename']) . '.' . $pathInfo['extension'];
     }
 
+    public function isUrlValid(string $url): bool
+    {
+        return array_key_exists('extension', pathinfo($url));
+    }
 }
