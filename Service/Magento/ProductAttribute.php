@@ -79,6 +79,10 @@ class ProductAttribute
      * @var array
      */
     protected $cacheAttributeOptions = [];
+    /**
+     * @var ResourceConnection
+     */
+    private $resourceConnection;
 
     public function __construct(
         Manager $cacheManager,
@@ -89,10 +93,10 @@ class ProductAttribute
         AttributeOptionInterfaceFactory $attributeOptionFactory,
         Filesystem $filesystem,
         Product\Media\Config $mediaConfig,
-        Logger $logger
+        Logger $logger,
+        ResourceConnection $resourceConnection
     ) {
         $this->cacheManager = $cacheManager;
-        $this->eavConfig = $eavConfig;
         $this->eavConfig = $eavConfig;
         $this->swatchHelperMedia = $swatchHelperMedia;
         $this->attributeRepository = $attributeRepository;
@@ -101,6 +105,7 @@ class ProductAttribute
         $this->filesystem = $filesystem;
         $this->mediaConfig = $mediaConfig;
         $this->logger = $logger;
+        $this->resourceConnection = $resourceConnection;
     }
 
     /**
@@ -590,6 +595,88 @@ class ProductAttribute
     public function deleteAttributeOption(string $attributeCode, AttributeOptionInterface $option)
     {
         $this->attributeOptionManagement->delete($attributeCode, $option->getValue());
+    }
+
+    /**
+     * @param OptionStoreLabel[] $optionStoreLabels
+     * @return void
+     */
+    public function updateAttributeOptionStoreLabels(array $optionStoreLabels)
+    {
+        $byAttributeCode = [];
+        foreach ($optionStoreLabels as $optionStoreLabel) {
+            if (!array_key_exists($optionStoreLabel->getAttributeCode(), $byAttributeCode)) {
+                $byAttributeCode[$optionStoreLabel->getAttributeCode()] = [];
+            }
+            $byAttributeCode[$optionStoreLabel->getAttributeCode()][] = $optionStoreLabel;
+        }
+        foreach ($byAttributeCode as $attributeCode => $optionStoreLabels) {
+            /** @var OptionStoreLabel[] $optionStoreLabels */
+            $attribute = $this->getAttribute($attributeCode);
+            foreach ($optionStoreLabels as $optionStoreLabel) {
+                foreach ($attribute->getOptions() as $optionInMagento) {
+                    if ($optionStoreLabel->getDefaultLabel() == $optionInMagento->getLabel()) {
+                        $eavAttributeOptionValue = $this->getEavAttributeOptionValue($optionInMagento->getValue(), $optionStoreLabel->getStoreId());
+                        if (!$eavAttributeOptionValue) {
+                            $this->addEavAttributeOptionValue($optionInMagento->getValue(), $optionStoreLabel->getStoreId(), $optionStoreLabel->getLabel());
+                            $this->logger->info('Added option store label attribute_code: ' . $attributeCode . ' label: ' . $optionStoreLabel->getLabel() . ' store_id: ' . $optionStoreLabel->getStoreId());
+                        } elseif ($eavAttributeOptionValue['value'] !== $optionStoreLabel->getLabel()){
+                            $this->updateEavAttributeOptionValue($optionInMagento->getValue(), $optionStoreLabel->getStoreId(), $optionStoreLabel->getLabel());
+                            $this->logger->info('Updated option store label attribute_code: ' . $attributeCode . ' label: ' . $optionStoreLabel->getLabel() . ' store_id: ' . $optionStoreLabel->getStoreId());
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * @param int $optionId
+     * @param int $storeId
+     * @return bool|array
+     */
+    public function getEavAttributeOptionValue(int $optionId, int $storeId)
+    {
+        $connection = $this->resourceConnection->getConnection();
+        return $connection->fetchRow("
+            SELECT * FROM eav_attribute_option_value eaov
+                WHERE eaov.option_id = :option_id AND
+                      eaov.store_id = :store_id
+        ", [
+            'option_id' => $optionId,
+            'store_id' => $storeId
+        ]);
+    }
+
+    public function addEavAttributeOptionValue(int $optionId, int $storeId, string $value)
+    {
+        $connection = $this->resourceConnection->getConnection();
+        $connection->query("
+            INSERT INTO eav_attribute_option_value
+                SET option_id = :option_id,
+                      store_id = :store_id,
+                    value = :value
+        ", [
+            'option_id' => $optionId,
+            'store_id' => $storeId,
+            'value' => $value,
+        ]);
+    }
+
+    public function updateEavAttributeOptionValue(string $optionId, int $storeId, string $label)
+    {
+        $connection = $this->resourceConnection->getConnection();
+        $stmt = $connection->prepare("
+            UPDATE eav_attribute_option_value
+                SET value = :value
+                WHERE option_id = :option_id AND
+                      store_id = :store_id
+        ");
+        $stmt->execute([
+            'option_id' => $optionId,
+            'store_id' => $storeId,
+            'value' => $label,
+        ]);
     }
 
 }
