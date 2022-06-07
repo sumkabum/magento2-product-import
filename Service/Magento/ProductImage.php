@@ -301,24 +301,41 @@ class ProductImage
         $this->galleryReadHandler->execute($product);
         $mediaGalleryEntries = $product->getMediaGalleryEntries();
 
+        $valuesIsNotSet = [
+            'image' => 'image',
+            'small_image' => 'small_image',
+            'thumbnail' => 'thumbnail',
+            'swatch_image' => 'swatch_image',
+        ];
         foreach ($mediaGalleryEntries as $existingImage) {
             foreach ($images as $image) {
                 if ($image && $this->areTheFilenamesSame($existingImage->getFile(), $this->getFilenameFromUrl($image->getUrl()))) {
                     if ($image->isBaseImage()) {
                         $product->setData('image', $existingImage->getFile());
+                        unset($valuesIsNotSet['image']);
                     }
                     if ($image->isSmallImage()) {
                         $product->setData('small_image', $existingImage->getFile());
+                        unset($valuesIsNotSet['small_image']);
                     }
                     if ($image->isThumbnail()) {
                         $product->setData('thumbnail', $existingImage->getFile());
+                        unset($valuesIsNotSet['thumbnail']);
                     }
                     if ($image->isSwatchImage()) {
                         $product->setData('swatch_image', $existingImage->getFile());
+                        unset($valuesIsNotSet['swatch_image']);
                     }
                 }
             }
         }
+
+        if (count($mediaGalleryEntries) > 0) {
+            foreach ($valuesIsNotSet as $valueIsNotSet) {
+                $product->setData($valueIsNotSet, $mediaGalleryEntries[0]->getFile());
+            }
+        }
+
     }
 
     /**

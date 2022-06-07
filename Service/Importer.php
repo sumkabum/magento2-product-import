@@ -223,6 +223,8 @@ class Importer
     public function updateProductLinks(DataRow $dataRow)
     {
         if (!$dataRow->needsUpdatingInMagento) return;
+        if (!$dataRow->updateProductLinks) return;
+        if (!$this->productCollectionCache->getProductData($dataRow->mappedDataFields['sku'])) return;
 
         $importProductLinks = [];
         foreach ($dataRow->productLinks as $productLink) {

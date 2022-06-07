@@ -37,11 +37,15 @@ class DataRow
      */
     public $disableProductIfNoImages = false;
     /**
-     * @var bool 
+     * @var bool
      */
     public $removeTmpImages = true;
     /**
      * @var ProductLink[]
      */
     public $productLinks = [];
+    /**
+     * @var bool
+     */
+    public $updateProductLinks = false;
 }
