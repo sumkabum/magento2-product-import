@@ -617,12 +617,13 @@ class ProductAttribute
                 foreach ($attribute->getOptions() as $optionInMagento) {
                     if ($optionStoreLabel->getDefaultLabel() == $optionInMagento->getLabel()) {
                         $eavAttributeOptionValue = $this->getEavAttributeOptionValue($optionInMagento->getValue(), $optionStoreLabel->getStoreId());
+                        $message = 'option store label attribute_code: ' . $attributeCode . ' default label: ' . $optionStoreLabel->getDefaultLabel() . ' label: ' . $optionStoreLabel->getLabel() . ' store_id: ' . $optionStoreLabel->getStoreId();
                         if (!$eavAttributeOptionValue) {
                             $this->addEavAttributeOptionValue($optionInMagento->getValue(), $optionStoreLabel->getStoreId(), $optionStoreLabel->getLabel());
-                            $this->logger->info('Added option store label attribute_code: ' . $attributeCode . ' label: ' . $optionStoreLabel->getLabel() . ' store_id: ' . $optionStoreLabel->getStoreId());
+                            $this->logger->info('Added ' . $message);
                         } elseif ($eavAttributeOptionValue['value'] !== $optionStoreLabel->getLabel()){
                             $this->updateEavAttributeOptionValue($optionInMagento->getValue(), $optionStoreLabel->getStoreId(), $optionStoreLabel->getLabel());
-                            $this->logger->info('Updated option store label attribute_code: ' . $attributeCode . ' label: ' . $optionStoreLabel->getLabel() . ' store_id: ' . $optionStoreLabel->getStoreId());
+                            $this->logger->info('Updated ' . $message);
                         }
                     }
                 }
