@@ -104,6 +104,18 @@ class ProductCollectionCache
 
         $collection->addAttributeToSelect($attributesToSelect);
 
+        if (in_array('use_config_manage_stock', $attributesToSelect)
+            || in_array('manage_stock', $attributesToSelect)
+            || in_array('is_in_stock', $attributesToSelect)
+            || in_array('qty', $attributesToSelect)
+        ) {
+            $collection->joinTable(
+                'cataloginventory_stock_item',
+                'product_id = entity_id',
+                ['use_config_manage_stock', 'manage_stock', 'is_in_stock', 'qty']
+            );
+        }
+
         if (in_array('category_ids', $attributesToSelect)) {
             $collection->load();
             $collection->addCategoryIds();
