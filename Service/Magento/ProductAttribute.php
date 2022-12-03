@@ -405,8 +405,6 @@ class ProductAttribute
         return $this;
     }
 
-
-
     /**
      * @param string $attributeCode
      * @param $attributeSetId
@@ -419,6 +417,11 @@ class ProductAttribute
     public function getOrCreateSwatchAttribute(string $attributeCode, $attributeSetId, string $attributeLabel = null): Attribute
     {
         return $this->getAttribute($attributeCode) ?? $this->createSwatchAttribute($attributeCode, $attributeSetId, $attributeLabel);
+    }
+
+    public function getOrCreateDropdownAttribute(string $attributeCode, $attributeSetId, string $attributeLabel = null): Attribute
+    {
+        return $this->getAttribute($attributeCode) ?? $this->createDropdownAttribute($attributeCode, $attributeSetId, $attributeLabel);
     }
 
     public function getAttribute(string $attributeCode): ?Attribute
@@ -468,6 +471,31 @@ class ProductAttribute
         $attribute->setData('use_product_image_for_swatch', 1);
         $attribute->setData('update_product_preview_image', 1);
         $attribute = $this->attributeRepository->save($attribute);
+
+        $this->logger->info('Attribute created. attribute_code: ' . $attribute->getAttributeCode());
+
+        return $attribute;
+    }
+
+    public function createDropdownAttribute(string $attributeCode, $attributeSetId, string $attributeLabel = null): Attribute
+    {
+        /** @var EavSetup $eavSetup */
+        $eavSetup = ObjectManager::getInstance()->create(\Magento\Eav\Setup\EavSetup::class);
+
+        $attributesData = $this->getDropdownAttributeData($attributeCode, $attributeLabel);
+
+        $eavSetup->addAttribute(Product::ENTITY, $attributeCode, $attributesData);
+
+        $attributeGroupId = $eavSetup->getDefaultAttributeGroupId(\Magento\Catalog\Model\Product::ENTITY, $attributeSetId);
+        $attributeId = $eavSetup->getAttributeId(\Magento\Catalog\Model\Product::ENTITY, $attributeCode);
+        $eavSetup->addAttributeToSet(\Magento\Catalog\Model\Product::ENTITY, $attributeSetId, $attributeGroupId, $attributeId);
+
+        /** @var Config $eavConfig */
+        $eavConfig = ObjectManager::getInstance()->get(Config::class);
+        $eavConfig->clear();
+
+        /** @var Attribute $attribute */
+        $attribute = $this->attributeRepository->get($attributeCode);
 
         $this->logger->info('Attribute created. attribute_code: ' . $attribute->getAttributeCode());
 
@@ -582,6 +610,27 @@ class ProductAttribute
             'is_html_allowed_on_front' => 0,
             'used_for_sort_by' => 0,
             Swatch::SWATCH_INPUT_TYPE_KEY => Swatch::SWATCH_INPUT_TYPE_VISUAL
+        ];
+    }
+
+    protected function getDropdownAttributeData(string $attributeCode, string $attributeLabel = null): array
+    {
+        return [
+            'type' => 'int',
+            'label' => $attributeLabel ?? $attributeCode,
+            'input' => 'select',
+            'backend' => 'Magento\Eav\Model\Entity\Attribute\Backend\ArrayBackend',
+            'source' => 'Magento\Eav\Model\Entity\Attribute\Source\Table',
+            'required' => false,
+            'global' => \Magento\Eav\Model\Entity\Attribute\ScopedAttributeInterface::SCOPE_GLOBAL,
+            'used_in_product_listing' => 1,
+            'visible_on_front' => 0,
+            'user_defined' => true,
+            'filterable' => 0,
+            'filterable_in_search' => 0,
+            'used_for_promo_rules' => 0,
+            'is_html_allowed_on_front' => 0,
+            'used_for_sort_by' => 0,
         ];
     }
 
