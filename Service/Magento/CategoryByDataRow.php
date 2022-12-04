@@ -36,6 +36,8 @@ class CategoryByDataRow
 
     private $cacheGetOrCreateCategoryUsing = [];
 
+    private $cacheGetMagentoCategoryIds = [];
+
     public function __construct(
         Logger $logger,
         StoreManagerInterface $storeManager,
@@ -81,6 +83,16 @@ class CategoryByDataRow
                 . ' name: ' . $category->getData('name')
             );
         }
+    }
+
+    public function getMagentoCategoryIdsUsingCache(array $sourceIds, string $sourceCode, $fieldNameSourceCode = self::CATEGORY_FIELD_NAME_SOURCE_CODE, string $fieldNameSourceId = self::CATEGORY_FIELD_NAME_SOURCE_ID)
+    {
+        $cacheKey = implode('-', $sourceIds) . $sourceCode . $fieldNameSourceCode . $fieldNameSourceId;
+        if (!array_key_exists($cacheKey, $this->cacheGetMagentoCategoryIds)) {
+            $this->cacheGetMagentoCategoryIds[$cacheKey] = $this->getMagentoCategoryIds($sourceIds, $sourceCode, $fieldNameSourceCode, $fieldNameSourceId);
+
+        }
+        return $this->cacheGetMagentoCategoryIds[$cacheKey];
     }
 
     public function getMagentoCategoryIds(array $sourceIds, string $sourceCode, $fieldNameSourceCode = self::CATEGORY_FIELD_NAME_SOURCE_CODE, string $fieldNameSourceId = self::CATEGORY_FIELD_NAME_SOURCE_ID)
