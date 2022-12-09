@@ -15,6 +15,10 @@
                     <label>Category Map</label>
                     <frontend_model>Sumkabum\Magento2ProductImport\Block\System\Config\Form\CategoryMapField</frontend_model>
                 </field>
+                <field id="importer_status" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Importer Status</label>
+                    <frontend_model>Magentopood\IntegrationBonprix\Block\System\Config\Form\ImporterStatus</frontend_model>
+                </field>
             </group>
         </section>
     </system>

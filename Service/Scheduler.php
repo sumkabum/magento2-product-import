@@ -31,7 +31,7 @@ class Scheduler
         $jobsCollection
             ->addFieldToFilter('job_code', $jobCode)
             ->addFieldToFilter('status', 'pending')
-            ->addFieldToFilter('scheduled_at', ['gt' => (new \DateTime())->format('Y-m-d H:i:s')])
+            ->addFieldToFilter('scheduled_at', ['gt' => (new \DateTime())->modify('-1 hour')->format('Y-m-d H:i:s')])
             ->addOrder('scheduled_at')
         ;
         return ($jobsCollection->count() > 0) ? $jobsCollection->getFirstItem() : null;

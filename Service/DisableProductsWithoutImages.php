@@ -14,6 +14,7 @@ use Magento\Framework\Exception\FileSystemException;
 use Magento\Framework\ObjectManagerInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use Psr\Log\LoggerInterface;
+use Sumkabum\Magento2ProductImport\Repository\SumkabumData;
 use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Output\OutputInterface;
 
@@ -57,6 +58,10 @@ class DisableProductsWithoutImages
      * @var Registry
      */
     private $registry;
+    /**
+     * @var SumkabumData
+     */
+    private $sumkabumData;
 
     public function __construct(
         StoreManagerInterface $storeManager,
@@ -67,7 +72,8 @@ class DisableProductsWithoutImages
         DirectoryList $directoryList,
         ObjectManagerInterface $objectManager,
         \Magento\Catalog\Model\Product\Action $productAction,
-        \Magento\Framework\Registry $registry
+        \Magento\Framework\Registry $registry,
+        SumkabumData $sumkabumData
     ) {
         $this->storeManager = $storeManager;
         $this->state = $state;
@@ -78,13 +84,14 @@ class DisableProductsWithoutImages
         $this->objectManager = $objectManager;
         $this->productAction = $productAction;
         $this->registry = $registry;
+        $this->sumkabumData = $sumkabumData;
     }
 
     /**
      * @throws FileSystemException
      * @throws \Magento\Framework\Exception\LocalizedException
      */
-    public function execute(bool $deleteInsteadDisable = false, ?OutputInterface $output = null, ?Report $report = null, ?LoggerInterface $logger = null, ?string $filterField = null, ?string $filterValue = null)
+    public function execute(bool $deleteInsteadDisable = false, ?OutputInterface $output = null, ?Report $report = null, ?LoggerInterface $logger = null, ?string $filterField = null, ?string $filterValue = null, $updateProgress = false)
     {
         $limit = 500;
         $currentPage = 1;
@@ -106,9 +113,20 @@ class DisableProductsWithoutImages
         $productSkusToDelete = [];
         $productSkusToDisable = [];
 
+        if ($updateProgress) {
+            $this->sumkabumData->set(ImporterStatus::DATA_KEY_IMPORTER_CURRENT_JOB, 'Collection products without images');
+            $progressTotal = $products->getSize();
+            $progressCurrent = 0;
+        }
+
         while ($products) {
 
             foreach ($products->getItems() as $product) {
+
+                if ($updateProgress) {
+                    $this->sumkabumData->set(ImporterStatus::DATA_KEY_IMPORTER_PROGRESS, (++$progressCurrent * 100 / $progressTotal));
+                }
+
                 /** @var Product $product */
                 $this->galleryReaderHandler->execute($product);
                 $existingImages = $product->getMediaGalleryEntries();
@@ -157,6 +175,11 @@ class DisableProductsWithoutImages
             $progressBar->start();
         }
 
+        if ($updateProgress) {
+            $this->sumkabumData->set(ImporterStatus::DATA_KEY_IMPORTER_CURRENT_JOB, 'Handling products without images');
+            $progressCurrent = 0;
+        }
+
         foreach ($productSkusToDelete as $sku)
         {
             try {
@@ -167,6 +190,9 @@ class DisableProductsWithoutImages
                 $this->logMessage($logger, $report, $sku . ' ' . $t->getMessage());
             }
             if ($output) $progressBar->advance();
+            if ($updateProgress) {
+                $this->sumkabumData->set(ImporterStatus::DATA_KEY_IMPORTER_PROGRESS, (++$progressCurrent * 100 / $totalProductsCountToHandle));
+            }
         }
 
         foreach ($productSkusToDisable as $sku)
@@ -179,6 +205,9 @@ class DisableProductsWithoutImages
                 $this->logMessage($logger, $report, $sku . ' ' . $t->getMessage());
             }
             if ($output) $progressBar->advance();
+            if ($updateProgress) {
+                $this->sumkabumData->set(ImporterStatus::DATA_KEY_IMPORTER_PROGRESS, (++$progressCurrent * 100 / $totalProductsCountToHandle));
+            }
         }
         if ($output) {
             $progressBar->finish();

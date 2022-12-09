@@ -29,4 +29,13 @@
             <column name="category_name"/>
         </index>
     </table>
+    <table name="sumkabum_data">
+        <column name="key" xsi:type="varchar" length="255" nullable="false" comment="Key"/>
+        <column name="value" xsi:type="text" nullable="true" comment="Value"/>
+        <column name="updated_at" xsi:type="timestamp" nullable="true" comment="Updated At"/>
+        <column name="created_at" xsi:type="timestamp" nullable="false" comment="Created At"/>
+        <constraint xsi:type="unique" referenceId="UNQ_SUMKABUM_DATA_KEY">
+            <column name="key"/>
+        </constraint>
+    </table>
 </schema>

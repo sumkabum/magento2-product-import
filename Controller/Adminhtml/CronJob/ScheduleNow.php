@@ -40,7 +40,7 @@ class ScheduleNow extends AbstractAction
             $this->messageManager->addErrorMessage('Job not found with code: ' . $jobCode . '. Probably cron is not enabled');
             return $result;
         }
-        $nextJob->setData('scheduled_at', (new \DateTime())->modify('+1 minute')->format('Y-m-d H:i:s'));
+        $nextJob->setData('scheduled_at', (new \DateTime())->format('Y-m-d H:i:s'));
         $nextJob->save($nextJob);
 
         $this->messageManager->addSuccessMessage('Job scheduled at . ' . $nextJob->getData('scheduled_at'));

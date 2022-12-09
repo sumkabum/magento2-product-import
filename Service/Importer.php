@@ -9,6 +9,7 @@ use Magento\Catalog\Model\Product\Attribute\Source\Status;
 use Magento\Catalog\Model\Product\Type;
 use Magento\ConfigurableProduct\Model\Product\Type\Configurable;
 use Magento\Framework\ObjectManagerInterface;
+use Sumkabum\Magento2ProductImport\Repository\SumkabumData;
 use Sumkabum\Magento2ProductImport\Service\Magento\ProductImage;
 use Psr\Log\LoggerInterface;
 use Throwable;
@@ -42,13 +43,18 @@ class Importer
      * @var ProductCollectionCache
      */
     private $productCollectionCache;
+    /**
+     * @var SumkabumData
+     */
+    private $sumkabumData;
 
     public function __construct(
         \Sumkabum\Magento2ProductImport\Service\Magento\Product $productService,
         ProductImage $productImageService,
         Logger $logger,
         ObjectManagerInterface $objectManager,
-        ProductCollectionCache $productCollectionCache
+        ProductCollectionCache $productCollectionCache,
+        SumkabumData $sumkabumData
     ) {
 
         $this->productService = $productService;
@@ -56,6 +62,7 @@ class Importer
         $this->logger = $logger;
         $this->objectManager = $objectManager;
         $this->productCollectionCache = $productCollectionCache;
+        $this->sumkabumData = $sumkabumData;
     }
 
     /**
@@ -100,7 +107,7 @@ class Importer
      * @throws \Magento\Framework\Exception\LocalizedException
      * @throws \Magento\Framework\Exception\StateException
      */
-    public function import(array $dataRows, array $doNotUpdateFields = [], array $fieldsToCopyFromSimpleToConfigurable = [], array $linkableAttributeCodes = [])
+    public function import(array $dataRows, array $doNotUpdateFields = [], array $fieldsToCopyFromSimpleToConfigurable = [], array $linkableAttributeCodes = [], bool $updateProgress = false)
     {
         $this->productImageService->setLogger($this->logger);
         $this->productImageService->setReport($this->getReport());
@@ -109,10 +116,16 @@ class Importer
         $count = count($configurableDataRows);
 
         $i = 0;
+        if ($updateProgress) {
+            $this->sumkabumData->set(ImporterStatus::DATA_KEY_IMPORTER_CURRENT_JOB, 'Importing configurable products');
+        }
         foreach ($configurableDataRows as $configurableDataRow) {
             $i++;
             if ($i % 10 == 0) {
                 $this->logger->info('progress configurable: ' . $i . ' of ' . $count);
+            }
+            if ($updateProgress) {
+                $this->sumkabumData->set(ImporterStatus::DATA_KEY_IMPORTER_PROGRESS, ($i * 100 / $count));
             }
 
             try {
@@ -163,11 +176,17 @@ class Importer
         $notConfigurableDataRows = $this->getNotConfigurableDataRows($dataRows);
         $count = count($notConfigurableDataRows);
 
+        if ($updateProgress) {
+            $this->sumkabumData->set(ImporterStatus::DATA_KEY_IMPORTER_CURRENT_JOB, 'Importing simple products');
+        }
         $i = 0;
         foreach ($notConfigurableDataRows as $notConfigurableDataRow) {
             $i++;
             if ($i % 10 == 0) {
                 $this->logger->info('progress non-configurable: ' . $i . ' of ' . $count);
+            }
+            if ($updateProgress) {
+                $this->sumkabumData->set(ImporterStatus::DATA_KEY_IMPORTER_PROGRESS, ($i * 100 / $count));
             }
 
             if (!$notConfigurableDataRow->needsUpdatingInMagento) {
