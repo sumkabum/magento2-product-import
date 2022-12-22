@@ -324,7 +324,6 @@ class Importer
                 /** @var \Magento\Framework\MessageQueue\PublisherInterface $publisher */
                 $publisher = ObjectManager::getInstance()->get(\Magento\Framework\MessageQueue\PublisherInterface::class);
                 $publisher->publish('sumkabum.product.image.import', $consumerImageData);
-                $this->logger->info($product->getSku() . ' image updating added to queue');
             } else {
 
                 $product = $this->productImageService->updateImages($product, $dataRow->images, $dataRow->removeTmpImages);
