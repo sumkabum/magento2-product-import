@@ -20,6 +20,8 @@ class DataRow
      */
     public $catUpdateImagesIfProductExists = false;
 
+    public $updateImagesAsync = false;
+
     /**
      * @var string
      */

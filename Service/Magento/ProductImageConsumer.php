@@ -36,7 +36,7 @@ class ProductImageConsumer
     {
         /** @var \Magento\Catalog\Model\Product $product */
         $product = $this->productRepository->get($consumerImageData->getProductSku());
-        $this->logger->info($product->getSku() . ' start updating images with consumer');
+        $this->logger->info(\Sumkabum\Magento2ProductImport\Service\Importer::LOGGER_TOPIC . ' ' . $product->getSku() . ' start updating images with consumer');
 
         $images = [];
         foreach ($consumerImageData->getConsumerImageDataRows() as $consumerImageDataRow) {
@@ -54,7 +54,7 @@ class ProductImageConsumer
         try {
             $this->productImageService->updateImages($product, $images);
         } catch (\Throwable $t) {
-            $this->logger->error($product->getSku() . $t->getMessage() . "\n" . $t->getTraceAsString());
+            $this->logger->error(\Sumkabum\Magento2ProductImport\Service\Importer::LOGGER_TOPIC . ' ' . $product->getSku() . $t->getMessage() . "\n" . $t->getTraceAsString());
         }
     }
 }

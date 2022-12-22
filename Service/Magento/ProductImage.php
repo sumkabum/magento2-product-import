@@ -192,7 +192,7 @@ class ProductImage
         $imageProcessor = ObjectManager::getInstance()->get(Processor::class);
         foreach ($imagesToDelete as $imageToDelete) {
             $imageProcessor->removeImage($product, $imageToDelete->getFile());
-            $this->logger->info($product->getSku() . ' removing image ' . $imageToDelete->getFile());
+            $this->logger->info(\Sumkabum\Magento2ProductImport\Service\Importer::LOGGER_TOPIC . ' ' . $product->getSku() . ' removing image ' . $imageToDelete->getFile());
             $this->getReport()->increaseByNumber($this->getReport()::KEY_IMAGES_REMOVED);
         }
         if (!empty($imagesToDelete)) {
@@ -211,24 +211,24 @@ class ProductImage
                     $this->download($imageToAdd->getUrl(), $imageLocalFullPath, $imageToAdd->getUsername(), $imageToAdd->getPassword());
                 }
             } catch (\Throwable $t) {
-                $this->logger->error('Failed to download image. ' . $t->getMessage() . $t->getTraceAsString());
+                $this->logger->error(\Sumkabum\Magento2ProductImport\Service\Importer::LOGGER_TOPIC . ' ' . 'Failed to download image. ' . $t->getMessage() . $t->getTraceAsString());
             }
 
             if (!$this->isValid($imageLocalFullPath)) {
-                $message = $product->getSku() . ' Invalid image. Url: ' . $imageToAdd->getUrl();
+                $message = \Sumkabum\Magento2ProductImport\Service\Importer::LOGGER_TOPIC . ' ' . $product->getSku() . ' Invalid image. Url: ' . $imageToAdd->getUrl();
                 $this->getReport()->addMessage($this->getReport()::KEY_ERRORS, $message);
-                $this->logger->info($message);
+                $this->logger->info(\Sumkabum\Magento2ProductImport\Service\Importer::LOGGER_TOPIC . ' ' . $message);
                 unset($imagesToAdd[$imageToAddKey]);
                 continue;
             }
 
             try {
                 $product->addImageToMediaGallery($imageLocalFullPath, null, $removeTmpImage, false);
-                $this->logger->info($product->getSku() . ' adding image: ' . $imageToAdd->getUrl());
+                $this->logger->info(\Sumkabum\Magento2ProductImport\Service\Importer::LOGGER_TOPIC . ' ' . $product->getSku() . ' adding image: ' . $imageToAdd->getUrl());
                 $this->getReport()->increaseByNumber($this->getReport()::KEY_IMAGES_ADDED);
 
             } catch (Exception $e) {
-                $this->logger->info($product->getSku() . ' image full path: ' . $imageLocalFullPath . ' Error message: ' . $e->getMessage());
+                $this->logger->info(\Sumkabum\Magento2ProductImport\Service\Importer::LOGGER_TOPIC . ' ' . $product->getSku() . ' image full path: ' . $imageLocalFullPath . ' Error message: ' . $e->getMessage());
                 $this->getReport()->messages[$this->getReport()::KEY_ERRORS][] = $product->getSku() . ' ' . $e->getMessage();
             }
         }

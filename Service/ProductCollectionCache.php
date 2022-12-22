@@ -70,6 +70,7 @@ class ProductCollectionCache
         if (!array_key_exists($cacheKey, $this->cachedProducts)) {
             $limit = 500;
             $currentPage = 1;
+            $this->cachedProducts[$cacheKey] = [];
             $productCollection = $this->getProductCollection($limit, $currentPage, $attributeCodes);
             while ($productCollection) {
                 $products = $productCollection->getItems();

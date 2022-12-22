@@ -8,14 +8,18 @@ use Magento\Catalog\Model\Product;
 use Magento\Catalog\Model\Product\Attribute\Source\Status;
 use Magento\Catalog\Model\Product\Type;
 use Magento\ConfigurableProduct\Model\Product\Type\Configurable;
+use Magento\Framework\App\ObjectManager;
 use Magento\Framework\ObjectManagerInterface;
 use Sumkabum\Magento2ProductImport\Repository\SumkabumData;
+use Sumkabum\Magento2ProductImport\Service\Image\ConsumerImageData;
 use Sumkabum\Magento2ProductImport\Service\Magento\ProductImage;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
 class Importer
 {
+    const LOGGER_TOPIC = 'IMPORTER';
+
     /**
      * @var Magento\Product
      */
@@ -297,14 +301,41 @@ class Importer
         if ($dataRow->needsUpdatingInMagento
             && ($this->productService->isNewProduct($product) || $dataRow->catUpdateImagesIfProductExists)
         ) {
-            $product = $this->productImageService->updateImages($product, $dataRow->images, $dataRow->removeTmpImages);
-            $existingImages = $product->getMediaGalleryEntries();
-            if ($dataRow->disableProductIfNoImages
-                && count($existingImages) <= 0
-                && $product->getStatus() == Status::STATUS_ENABLED
-            ) {
-                $this->productService->disableProduct($product);
-                $this->logger->info($product->getSku() . ' Disabling product because having no images');
+            if ($dataRow->updateImagesAsync) {
+
+                $consumerImageData = new ConsumerImageData();
+                $consumerImageData->setProductSku($product->getSku());
+
+                /** @var Image\ConsumerImageDataRow[] $consumerImageDataRows */
+                $consumerImageDataRows = [];
+                foreach ($dataRow->images as $image) {
+                    $consumerImageDataRow = new Image\ConsumerImageDataRow();
+                    $consumerImageDataRow->setUrl($image->getUrl());
+                    $consumerImageDataRow->setIsThumbnail($image->isThumbnail());
+                    $consumerImageDataRow->setIsBaseImage($image->isBaseImage());
+                    $consumerImageDataRow->setIsSmallImage($image->isSmallImage());
+                    $consumerImageDataRow->setIsSwatchImage($image->isSwatchImage());
+                    $consumerImageDataRow->setLabel($image->getLabel());
+                    $consumerImageDataRows[] = $consumerImageDataRow;
+                }
+
+                $consumerImageData->setConsumerImageDataRows($consumerImageDataRows);
+
+                /** @var \Magento\Framework\MessageQueue\PublisherInterface $publisher */
+                $publisher = ObjectManager::getInstance()->get(\Magento\Framework\MessageQueue\PublisherInterface::class);
+                $publisher->publish('sumkabum.product.image.import', $consumerImageData);
+                $this->logger->info($product->getSku() . ' image updating added to queue');
+            } else {
+
+                $product = $this->productImageService->updateImages($product, $dataRow->images, $dataRow->removeTmpImages);
+                $existingImages = $product->getMediaGalleryEntries();
+                if ($dataRow->disableProductIfNoImages
+                    && count($existingImages) <= 0
+                    && $product->getStatus() == Status::STATUS_ENABLED
+                ) {
+                    $this->productService->disableProduct($product);
+                    $this->logger->info($product->getSku() . ' Disabling product because having no images');
+                }
             }
         }
         return $product;
