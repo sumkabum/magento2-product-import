@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework-message-queue:etc/queue.xsd">
+    <broker topic="sumkabum.product.image.import" exchange="sumkabum.product.image.import-exchange" type="db">
+        <queue name="sumkabum.product.image.import"
+               consumer="sumkabum.product.image.import"
+               consumerInstance="Magento\Framework\MessageQueue\Consumer"
+               handler="Sumkabum\Magento2ProductImport\Service\Magento\ProductImageConsumer::updateImages"/>
+    </broker>
+</config>

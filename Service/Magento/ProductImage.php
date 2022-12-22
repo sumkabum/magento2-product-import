@@ -71,7 +71,7 @@ class ProductImage
         Processor $imageProcessor,
         DirectoryList $directoryList,
         ProductRepositoryInterface $productRepository,
-        Logger $logger
+        LoggerInterface $logger
     ) {
         $this->emulation = $emulation;
         $this->galleryReadHandler = $galleryReadHandler;
@@ -104,6 +104,9 @@ class ProductImage
      */
     public function getReport(): Report
     {
+        if (!$this->report) {
+            $this->report = ObjectManager::getInstance()->get(Report::class);
+        }
         return $this->report;
     }
 
@@ -190,7 +193,7 @@ class ProductImage
         foreach ($imagesToDelete as $imageToDelete) {
             $imageProcessor->removeImage($product, $imageToDelete->getFile());
             $this->logger->info($product->getSku() . ' removing image ' . $imageToDelete->getFile());
-            $this->report->increaseByNumber($this->report::KEY_IMAGES_REMOVED);
+            $this->getReport()->increaseByNumber($this->getReport()::KEY_IMAGES_REMOVED);
         }
         if (!empty($imagesToDelete)) {
             $product = $this->productRepository->save($product);
@@ -222,11 +225,11 @@ class ProductImage
             try {
                 $product->addImageToMediaGallery($imageLocalFullPath, null, $removeTmpImage, false);
                 $this->logger->info($product->getSku() . ' adding image: ' . $imageToAdd->getUrl());
-                $this->report->increaseByNumber($this->report::KEY_IMAGES_ADDED);
+                $this->getReport()->increaseByNumber($this->getReport()::KEY_IMAGES_ADDED);
 
             } catch (Exception $e) {
                 $this->logger->info($product->getSku() . ' image full path: ' . $imageLocalFullPath . ' Error message: ' . $e->getMessage());
-                $this->report->messages[$this->report::KEY_ERRORS][] = $product->getSku() . ' ' . $e->getMessage();
+                $this->getReport()->messages[$this->getReport()::KEY_ERRORS][] = $product->getSku() . ' ' . $e->getMessage();
             }
         }
 

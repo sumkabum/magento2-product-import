@@ -6,4 +6,6 @@
             </argument>
         </arguments>
     </type>
+    <preference for="\Sumkabum\Magento2ProductImport\Service\Image\ConsumerImageDataInterface" type="\Sumkabum\Magento2ProductImport\Service\Image\ConsumerImageData" />
+    <preference for="\Sumkabum\Magento2ProductImport\Service\Image\ConsumerImageDataRowInterface" type="\Sumkabum\Magento2ProductImport\Service\Image\ConsumerImageDataRow" />
 </config>
