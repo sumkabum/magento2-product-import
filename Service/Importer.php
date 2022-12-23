@@ -323,7 +323,7 @@ class Importer
 
                 /** @var \Magento\Framework\MessageQueue\PublisherInterface $publisher */
                 $publisher = ObjectManager::getInstance()->get(\Magento\Framework\MessageQueue\PublisherInterface::class);
-                $publisher->publish('sumkabum.product.image.import', $consumerImageData);
+                $publisher->publish('sumkabum.product.image.import' . rand(1, 2), $consumerImageData);
             } else {
 
                 $product = $this->productImageService->updateImages($product, $dataRow->images, $dataRow->removeTmpImages);

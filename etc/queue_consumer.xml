@@ -1,8 +1,13 @@
 <?xml version="1.0"?>
 
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework-message-queue:etc/consumer.xsd">
-    <consumer name="sumkabum.product.image.import"
-              queue="sumkabum.product.image.import"
+    <consumer name="sumkabum.product.image.import1"
+              queue="sumkabum.product.image.import1"
+              connection="db"
+              consumerInstance="Magento\Framework\MessageQueue\Consumer"
+              handler="Sumkabum\Magento2ProductImport\Service\Magento\ProductImageConsumer::updateImages"/>
+    <consumer name="sumkabum.product.image.import2"
+              queue="sumkabum.product.image.import2"
               connection="db"
               consumerInstance="Magento\Framework\MessageQueue\Consumer"
               handler="Sumkabum\Magento2ProductImport\Service\Magento\ProductImageConsumer::updateImages"/>

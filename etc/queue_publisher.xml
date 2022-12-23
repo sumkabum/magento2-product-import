@@ -1,7 +1,10 @@
 <?xml version="1.0"?>
 
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework-message-queue:etc/publisher.xsd">
-    <publisher topic="sumkabum.product.image.import">
-        <connection name="db" exchange="sumkabum.product.image.import-exchange" />
+    <publisher topic="sumkabum.product.image.import1">
+        <connection name="db" exchange="sumkabum.product.image.import1-exchange" />
+    </publisher>
+    <publisher topic="sumkabum.product.image.import2">
+        <connection name="db" exchange="sumkabum.product.image.import2-exchange" />
     </publisher>
 </config>

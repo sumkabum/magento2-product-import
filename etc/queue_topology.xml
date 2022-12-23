@@ -1,10 +1,16 @@
 <?xml version="1.0"?>
 
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework-message-queue:etc/topology.xsd">
-    <exchange name="sumkabum.product.image.import-exchange" type="topic" connection="db">
-        <binding id="sumkabum.product.image.importBinding"
-                 topic="sumkabum.product.image.import"
+    <exchange name="sumkabum.product.image.import1-exchange" type="topic" connection="db">
+        <binding id="sumkabum.product.image.import1Binding"
+                 topic="sumkabum.product.image.import1"
                  destinationType="queue"
-                 destination="sumkabum.product.image.import"/>
+                 destination="sumkabum.product.image.import1"/>
+    </exchange>
+    <exchange name="sumkabum.product.image.import2-exchange" type="topic" connection="db">
+        <binding id="sumkabum.product.image.import2Binding"
+                 topic="sumkabum.product.image.import2"
+                 destinationType="queue"
+                 destination="sumkabum.product.image.import2"/>
     </exchange>
 </config>

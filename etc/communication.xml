@@ -1,5 +1,6 @@
 <?xml version="1.0"?>
 
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:Communication/etc/communication.xsd">
-    <topic name="sumkabum.product.image.import" request="Sumkabum\Magento2ProductImport\Service\Image\ConsumerImageData"/>
+    <topic name="sumkabum.product.image.import1" request="Sumkabum\Magento2ProductImport\Service\Image\ConsumerImageData"/>
+    <topic name="sumkabum.product.image.import2" request="Sumkabum\Magento2ProductImport\Service\Image\ConsumerImageData"/>
 </config>
