@@ -93,6 +93,7 @@ class DisableProductsWithoutImages
      */
     public function execute(bool $deleteInsteadDisable = false, ?OutputInterface $output = null, ?Report $report = null, ?LoggerInterface $logger = null, ?string $filterField = null, ?string $filterValue = null, $updateProgress = false)
     {
+        $this->setAreaCode();
         $limit = 500;
         $currentPage = 1;
 
