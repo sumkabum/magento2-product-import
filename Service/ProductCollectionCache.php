@@ -73,6 +73,7 @@ class ProductCollectionCache
             $this->cachedProducts[$cacheKey] = [];
             $productCollection = $this->getProductCollection($limit, $currentPage, $attributeCodes);
             while ($productCollection) {
+                $this->logger->info('CollectionCache $currentPage: ' . $currentPage);
                 $products = $productCollection->getItems();
 
                 foreach ($products as $product) {
