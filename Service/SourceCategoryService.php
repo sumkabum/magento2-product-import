@@ -23,13 +23,41 @@ class SourceCategoryService
     private $souceCategoryCollectionCache;
 
     private $souceCategoriesCache;
+    private CategoryMapWithEditorService $categoryMapWithEditorService;
 
     public function __construct(
         LoggerInterface $logger,
-        ObjectManagerInterface $objectManager
+        ObjectManagerInterface $objectManager,
+        CategoryMapWithEditorService $categoryMapWithEditorService
     ) {
         $this->logger = $logger;
         $this->objectManager = $objectManager;
+        $this->categoryMapWithEditorService = $categoryMapWithEditorService;
+    }
+
+    public function getMappedNamesPathArrayWithMapEditor($sourceCategoryId, string $sourceCode, string $configPath): ?array
+    {
+        $sourceCategoryNamesPath = $this->getSourceCategoryNamesPath($sourceCategoryId, $sourceCode);
+        return $sourceCategoryNamesPath ? $this->categoryMapWithEditorService->getMappedCategoryPathAsArray($sourceCategoryNamesPath, $configPath) : null;
+    }
+
+    public function getSourceCategoryNamesPathAsArray($sourceCategoryId, string $sourceCode): ?array
+    {
+        $categoryNamesPath = $this->getSourceCategoryNamesPath($sourceCategoryId, $sourceCode);
+        if ($categoryNamesPath) {
+            $categoryNamesPathArray = [];
+            foreach (explode('/', $categoryNamesPath) as $categoryName) {
+                $categoryNamesPathArray[] = trim($categoryName);
+            }
+            return $categoryNamesPathArray;
+        }
+        return null;
+    }
+
+    public function getSourceCategoryNamesPath($sourceCategoryId, string $sourceCode): ?string
+    {
+        $sourceCategory = $this->getSourceCategory($sourceCategoryId, $sourceCode);
+        return $sourceCategory ? $this->getNamesPathAsString($sourceCategory, $this->getSourceCategoryCollection($sourceCode)) : null;
     }
 
     /**

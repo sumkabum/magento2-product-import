@@ -1,0 +1,79 @@
+<?php
+use Sumkabum\Magento2ProductImport\Block\System\Config\Form\CategoryMapField;
+/** @var $block CategoryMapField */
+?>
+<div id="import-source-categories-button" style="margin-bottom: 20px;">
+    <button v-on:click.prevent="redirectToImport">{{ buttonMessage }}</button>
+</div>
+<div id="category-map">
+    <textarea v-bind:value="textareaValue" style="height: 500px; font-family: monospace; font-size:8px" name="<?php echo $block->getElement()->getName() ?>"></textarea
+</div>
+
+<script>
+    require([
+        'vue',
+        'jquery'
+    ], function(Vue, $) {
+        'use strict';
+
+        $(document).ready(function (){
+            $('#category-map').closest('tr').find('td.label').remove();
+            $('[id$=_category_map_map] td.value').css('width', '100%');
+        })
+
+        let sourceCategories = <?php echo json_encode($block->getSourceCategoriesOptionsArray()); ?>;
+
+        new Vue({
+            el: '#import-source-categories-button',
+            data: {
+                url: '<?php echo $block->getImportSourceCategoriesUrl() ?>',
+                buttonMessage: '<?php echo $block->getImportSourceCategoriesName() ?>'
+            },
+            methods: {
+                redirectToImport: function() {
+                    this.buttonMessage = 'Importing ...'
+                    location.href = this.url;
+                }
+            }
+        })
+
+        new Vue({
+           el: '#category-map',
+           data: {
+               textareaValue: `<?php echo $block->getElement()->getData('value') ?>`,
+           },
+           computed: {
+               textareaValueComputed: function () {
+                   console.log('debug this.textareaValue', this.textareaValue);
+                   if (!this.textareaValue) {
+                       return this.getTextareaValue();
+                   }
+                   this.textareaValue;
+               }
+           },
+           methods: {
+               getTextareaValue: function () {
+                   let string = ''
+                   let longestName = 0;
+                   let sourceCategoryNames = sourceCategories.map((item) => {
+                       if (item['name'].length > longestName) {
+                           longestName = item['name'].length;
+                       }
+                       return item['name'];
+                   })
+
+                   sourceCategoryNames.forEach(function (value, index) {
+                       string += value + " ".repeat(longestName - value.length) + '-> ' + value + "\n";
+                   })
+                   return string;
+               }
+
+           },
+            mounted: function () {
+                if (!this.textareaValue) {
+                    this.textareaValue = this.getTextareaValue();
+                }
+            }
+        })
+    })
+</script>
