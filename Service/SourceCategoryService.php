@@ -24,6 +24,7 @@ class SourceCategoryService
 
     private $souceCategoriesCache;
     private CategoryMapWithEditorService $categoryMapWithEditorService;
+    private $cacheGetMappedNamesPathArrayWithMapEditor = [];
 
     public function __construct(
         LoggerInterface $logger,
@@ -37,8 +38,13 @@ class SourceCategoryService
 
     public function getMappedNamesPathArrayWithMapEditor($sourceCategoryId, string $sourceCode, string $configPath): ?array
     {
-        $sourceCategoryNamesPath = $this->getSourceCategoryNamesPath($sourceCategoryId, $sourceCode);
-        return $sourceCategoryNamesPath ? $this->categoryMapWithEditorService->getMappedCategoryPathAsArray($sourceCategoryNamesPath, $configPath) : null;
+        $cacheKey = $sourceCategoryId . $sourceCode . $configPath;
+        if (!isset($this->cacheGetMappedNamesPathArrayWithMapEditor[$cacheKey])) {
+            $sourceCategoryNamesPath = $this->getSourceCategoryNamesPath($sourceCategoryId, $sourceCode);
+            $this->cacheGetMappedNamesPathArrayWithMapEditor[$cacheKey] = $sourceCategoryNamesPath ? $this->categoryMapWithEditorService->getMappedCategoryPathAsArray($sourceCategoryNamesPath, $configPath) : null;
+        }
+
+        return $this->cacheGetMappedNamesPathArrayWithMapEditor[$cacheKey];
     }
 
     public function getSourceCategoryNamesPathAsArray($sourceCategoryId, string $sourceCode): ?array
