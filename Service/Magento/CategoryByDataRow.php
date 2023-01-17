@@ -102,7 +102,6 @@ class CategoryByDataRow
         $categoryCollection
             ->addFieldToFilter($fieldNameSourceCode, $sourceCode)
             ->addFieldToFilter($fieldNameSourceId, ['in' => $sourceIds])
-            ->addFieldToFilter('is_active', 1)
             ->setPageSize(1)
             ->load();
 
