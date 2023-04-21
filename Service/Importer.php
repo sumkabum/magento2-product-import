@@ -129,7 +129,7 @@ class Importer
                 $this->logger->info('progress configurable: ' . $i . ' of ' . $count);
             }
             if ($updateProgress) {
-                $this->sumkabumData->set(ImporterStatus::DATA_KEY_IMPORTER_PROGRESS, ($i * 100 / $count));
+                $this->sumkabumData->set(ImporterStatus::DATA_KEY_IMPORTER_PROGRESS, (int)($i * 100 / $count) . ' %');
             }
 
             try {
@@ -190,7 +190,7 @@ class Importer
                 $this->logger->info('progress non-configurable: ' . $i . ' of ' . $count);
             }
             if ($updateProgress) {
-                $this->sumkabumData->set(ImporterStatus::DATA_KEY_IMPORTER_PROGRESS, ($i * 100 / $count));
+                $this->sumkabumData->set(ImporterStatus::DATA_KEY_IMPORTER_PROGRESS, (int)($i * 100 / $count) . ' %');
             }
 
             if (!$notConfigurableDataRow->needsUpdatingInMagento) {

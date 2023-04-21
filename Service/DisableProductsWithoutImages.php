@@ -125,7 +125,7 @@ class DisableProductsWithoutImages
             foreach ($products->getItems() as $product) {
 
                 if ($updateProgress) {
-                    $this->sumkabumData->set(ImporterStatus::DATA_KEY_IMPORTER_PROGRESS, (++$progressCurrent * 100 / $progressTotal));
+                    $this->sumkabumData->set(ImporterStatus::DATA_KEY_IMPORTER_PROGRESS, (int)(++$progressCurrent * 100 / $progressTotal) . ' %');
                 }
 
                 /** @var Product $product */
@@ -192,7 +192,7 @@ class DisableProductsWithoutImages
             }
             if ($output) $progressBar->advance();
             if ($updateProgress) {
-                $this->sumkabumData->set(ImporterStatus::DATA_KEY_IMPORTER_PROGRESS, (++$progressCurrent * 100 / $totalProductsCountToHandle));
+                $this->sumkabumData->set(ImporterStatus::DATA_KEY_IMPORTER_PROGRESS, (int)(++$progressCurrent * 100 / $totalProductsCountToHandle) . ' %');
             }
         }
 
@@ -207,7 +207,7 @@ class DisableProductsWithoutImages
             }
             if ($output) $progressBar->advance();
             if ($updateProgress) {
-                $this->sumkabumData->set(ImporterStatus::DATA_KEY_IMPORTER_PROGRESS, (++$progressCurrent * 100 / $totalProductsCountToHandle));
+                $this->sumkabumData->set(ImporterStatus::DATA_KEY_IMPORTER_PROGRESS, (int)(++$progressCurrent * 100 / $totalProductsCountToHandle) . ' %');
             }
         }
         if ($output) {

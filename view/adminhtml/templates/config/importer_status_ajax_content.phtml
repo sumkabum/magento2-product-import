@@ -17,7 +17,7 @@ if ($currentRunningJob) {
     echo __('Import currently running. Started at ') . $currentRunningJob->getData('executed_at') . ' UTC<br>';
     $dataRepository = ObjectManager::getInstance()->get(SumkabumData::class);
     $progress = $dataRepository->get(ImporterStatus::DATA_KEY_IMPORTER_PROGRESS);
-    echo $dataRepository->get(ImporterStatus::DATA_KEY_IMPORTER_CURRENT_JOB) ?><?php echo $progress ? ': ' . (int) $progress . ' %' : '';
+    echo $dataRepository->get(ImporterStatus::DATA_KEY_IMPORTER_CURRENT_JOB) ?><?php echo $progress ? ': ' . $progress : '';
 
 } else {
 

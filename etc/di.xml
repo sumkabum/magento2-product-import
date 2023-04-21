@@ -3,6 +3,7 @@
         <arguments>
             <argument name="commands" xsi:type="array">
                 <item name="sumkabum_magento2productimport_console_disableproductswithoutimages" xsi:type="object">\Sumkabum\Magento2ProductImport\Console\DisableProductsWithoutImages</item>
+                <item name="sumkabum_magento2productimport_console_disableproductswithoutimagesusingsql" xsi:type="object">\Sumkabum\Magento2ProductImport\Console\DisableProductsWithoutImagesUsingSql</item>
             </argument>
         </arguments>
     </type>
