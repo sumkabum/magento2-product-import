@@ -268,7 +268,7 @@ class Product
 
             foreach ($linkableAttributeCodes as $linkableAttributeCode) {
                 $linkableAttribute = $this->productAttributeService->getAttribute($linkableAttributeCode);
-                $option = $this->productAttributeService->getOptionByIdAndAttributeCode($linkableAttributeCode, $simpleProduct->getData($linkableAttributeCode));
+                $option = $this->productAttributeService->getOptionByIdAndAttributeCodeUsingCache($linkableAttributeCode, $simpleProduct->getData($linkableAttributeCode));
 
                 $attributeValues[$linkableAttributeCode][$option->getValue()] = [
                     'label' => $linkableAttribute->getStoreLabel(),

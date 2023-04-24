@@ -79,6 +79,7 @@ class ProductAttribute
      * @var array
      */
     protected $cacheAttributeOptions = [];
+    protected $cacheAttributeOptionsByAttributeCode = [];
     /**
      * @var ResourceConnection
      */
@@ -194,6 +195,34 @@ class ProductAttribute
             }
         }
 
+        return null;
+    }
+
+    /**
+     * @param string $attributeCode
+     * @param $optionId
+     * @return AttributeOptionInterface|null
+     * @throws LocalizedException
+     */
+    public function getOptionByIdAndAttributeCodeUsingCache(string $attributeCode, $optionId): ?AttributeOptionInterface
+    {
+        if (!array_key_exists($attributeCode, $this->cacheAttributeOptionsByAttributeCode)) {
+            /** @var Attribute $attribute */
+            $attribute = $this->getAttribute($attributeCode);
+            $options = $attribute->getOptions();
+            $this->cacheAttributeOptionsByAttributeCode[$attributeCode] = $options;
+        } else {
+            $options = $this->cacheAttributeOptionsByAttributeCode[$attributeCode];
+        }
+
+        foreach ($options as $option) {
+
+            if ($option instanceof Option) {
+                if ($option->getValue() == $optionId) {
+                    return $option;
+                }
+            }
+        }
         return null;
     }
 
