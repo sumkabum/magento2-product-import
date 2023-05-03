@@ -18,13 +18,14 @@ if ($currentRunningJob) {
     $dataRepository = ObjectManager::getInstance()->get(SumkabumData::class);
     $progress = $dataRepository->get(ImporterStatus::DATA_KEY_IMPORTER_PROGRESS);
     echo $dataRepository->get(ImporterStatus::DATA_KEY_IMPORTER_CURRENT_JOB) ?><?php echo $progress ? ': ' . $progress : '';
-
+    $urlStopImport = $url->getUrl('sumkabumimporter/cronJob/stopImport', ['job_code' => $block->getData('job_code')]);
+    echo ' &nbsp;&nbsp;&nbsp;<button onclick="window.location.href = \'' . $urlStopImport . '\'; return false;" style="margin-top:10px;">' . __('Stop') . '</button>';
 } else {
 
     if ($nextJob = $schedulerService->getNextJob($block->getData('job_code'))) {
         echo __('Scheduled at ') . $nextJob->getData('scheduled_at') . ' UTC';
         $startNowUrl = $url->getUrl('sumkabumimporter/cronJob/scheduleNow', ['job_code' => $block->getData('job_code')]);
-        echo ' <button onclick="window.location.href = \'' . $startNowUrl . '\'; return false;">' . __('Schedule now') . '</button></td>';
+        echo ' <button onclick="window.location.href = \'' . $startNowUrl . '\'; return false;">' . __('Schedule now') . '</button>';
     } else {
         echo __('Next run not found.');
     }
