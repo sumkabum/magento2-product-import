@@ -48,6 +48,12 @@ class DisableProductsWithoutImagesUsingSql
      * @var \Magento\Framework\App\ResourceConnection
      */
     private $resourceConnection;
+    /**
+     * @var ImporterStop
+     */
+    private $importerStop;
+
+    public $checkForStopRequest = false;
 
     public function __construct(
         StoreManagerInterface $storeManager,
@@ -56,7 +62,8 @@ class DisableProductsWithoutImagesUsingSql
         DirectoryList $directoryList,
         \Magento\Catalog\Model\Product\Action $productAction,
         SumkabumData $sumkabumData,
-        \Magento\Framework\App\ResourceConnection $resourceConnection
+        \Magento\Framework\App\ResourceConnection $resourceConnection,
+        ImporterStop $importerStop
     ) {
         $this->storeManager = $storeManager;
         $this->state = $state;
@@ -65,6 +72,7 @@ class DisableProductsWithoutImagesUsingSql
         $this->productAction = $productAction;
         $this->sumkabumData = $sumkabumData;
         $this->resourceConnection = $resourceConnection;
+        $this->importerStop = $importerStop;
     }
 
     /**
@@ -105,6 +113,10 @@ class DisableProductsWithoutImagesUsingSql
             }
 
             foreach ($rows as $row) {
+
+                if ($this->checkForStopRequest) {
+                    $this->importerStop->checkForImporterStopRequestAndExit();
+                }
                 if (!file_exists($this->getCatalogProductImageFullPath($row['image']))) {
                     $productSkusToDisable[] = $row['sku'];
                 }
@@ -138,6 +150,9 @@ class DisableProductsWithoutImagesUsingSql
         foreach ($productSkusToDisable as $sku)
         {
             try {
+                if ($this->checkForStopRequest) {
+                    $this->importerStop->checkForImporterStopRequestAndExit();
+                }
                 $this->disableProductBySKu($sku);
                 $message = $sku . ' Product disabled because having no images';
                 $this->logMessage($logger, $report, $message);

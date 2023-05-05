@@ -51,6 +51,12 @@ class Importer
      * @var SumkabumData
      */
     private $sumkabumData;
+    /**
+     * @var ImporterStop
+     */
+    private $importerStop;
+
+    public $checkForStopRequest = false;
 
     public function __construct(
         \Sumkabum\Magento2ProductImport\Service\Magento\Product $productService,
@@ -58,7 +64,8 @@ class Importer
         Logger $logger,
         ObjectManagerInterface $objectManager,
         ProductCollectionCache $productCollectionCache,
-        SumkabumData $sumkabumData
+        SumkabumData $sumkabumData,
+        ImporterStop $importerStop
     ) {
 
         $this->productService = $productService;
@@ -67,6 +74,7 @@ class Importer
         $this->objectManager = $objectManager;
         $this->productCollectionCache = $productCollectionCache;
         $this->sumkabumData = $sumkabumData;
+        $this->importerStop = $importerStop;
     }
 
     /**
@@ -281,6 +289,9 @@ class Importer
     public function saveProduct(DataRow $dataRow, array $doNotUpdateFields)
     {
         if ($dataRow->needsUpdatingInMagento) {
+            if ($this->checkForStopRequest) {
+                $this->importerStop->checkForImporterStopRequestAndExit();
+            }
             $this->report->increaseByNumber($this->report::KEY_PRODUCTS_UPDATED);
             return $this->productService->save($dataRow->mappedDataFields, $doNotUpdateFields, $dataRow->storeBasedAttributeValuesArray);
         } else {

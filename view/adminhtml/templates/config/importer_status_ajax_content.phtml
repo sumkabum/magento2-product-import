@@ -14,12 +14,16 @@ $url = ObjectManager::getInstance()->get(\Magento\Framework\UrlInterface::class)
 $schedulerService = ObjectManager::getInstance()->get(Scheduler::class);
 $currentRunningJob = $schedulerService->getCurrentRunningJob($block->getData('job_code'));
 if ($currentRunningJob) {
-    echo __('Import currently running. Started at ') . $currentRunningJob->getData('executed_at') . ' UTC<br>';
     $dataRepository = ObjectManager::getInstance()->get(SumkabumData::class);
+    $stopIsRequested = $dataRepository->get(\Sumkabum\Magento2ProductImport\Service\ImporterStop::DATA_KEY_IMPORTER_STOP_REQUESTED);
+    echo __('Import currently running. Started at ') . $currentRunningJob->getData('executed_at') . ' UTC<br>';
     $progress = $dataRepository->get(ImporterStatus::DATA_KEY_IMPORTER_PROGRESS);
     echo $dataRepository->get(ImporterStatus::DATA_KEY_IMPORTER_CURRENT_JOB) ?><?php echo $progress ? ': ' . $progress : '';
     $urlStopImport = $url->getUrl('sumkabumimporter/cronJob/stopImport', ['job_code' => $block->getData('job_code')]);
-    echo ' &nbsp;&nbsp;&nbsp;<button onclick="window.location.href = \'' . $urlStopImport . '\'; return false;" style="margin-top:10px;">' . __('Stop') . '</button>';
+    ?>
+    &nbsp;&nbsp;&nbsp;
+    <button onclick="window.location.href = '<?php echo $urlStopImport ?>//'; return false;" style="margin-top:10px;" <?php echo $stopIsRequested ? 'disabled="disabled"' : '' ?> ><?php echo $stopIsRequested ? 'Stopping ...' : __('Stop') ?></button>
+    <?php
 } else {
 
     if ($nextJob = $schedulerService->getNextJob($block->getData('job_code'))) {
