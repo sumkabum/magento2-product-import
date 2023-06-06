@@ -413,13 +413,17 @@ class Product
     {
         $this->setAreaCode();
 
-        $searchCriteria = $this->searchCriteriaBuilder
+        $this->searchCriteriaBuilder
             ->addFilter($sourceCodeFieldName, $sourceCode)
-            ->addFilter('sku', $validSkuList, 'nin')
             ->addFilter('status', Status::STATUS_ENABLED)
             ->setCurrentPage($currentPage)
-            ->setPageSize($limit)
-            ->create();
+            ->setPageSize($limit);
+
+        if (count($validSkuList) > 0) {
+            $this->searchCriteriaBuilder->addFilter('sku', $validSkuList, 'nin');
+        }
+
+        $searchCriteria = $this->searchCriteriaBuilder->create();
 
         $productList = $this->productRepository->getList($searchCriteria);
 
