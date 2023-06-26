@@ -28,7 +28,7 @@ class OldProducts
      * @var \Magento\Framework\Api\SearchCriteriaBuilder
      */
     private $searchCriteriaBuilder;
-    private \Magento\Framework\App\ResourceConnection $resourceConnection;
+    private $resourceConnection;
 
     public function __construct (
         ProductRepositoryInterface $productRepository,

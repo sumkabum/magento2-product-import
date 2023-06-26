@@ -66,6 +66,10 @@ class Product
      * @var \Sumkabum\Magento2ProductImport\Service\Report
      */
     private $report;
+    /**
+     * @var \Magento\Framework\App\ResourceConnection
+     */
+    private $resourceConnection;
 
     public function __construct(
         ProductRepositoryInterface $productRepository,
@@ -76,7 +80,8 @@ class Product
         UrlKey $urlKeyService,
         Logger $logger,
         \Magento\Indexer\Model\Indexer\CollectionFactory $indexerCollectionFactory,
-        \Magento\Framework\Api\SearchCriteriaBuilder $searchCriteriaBuilder
+        \Magento\Framework\Api\SearchCriteriaBuilder $searchCriteriaBuilder,
+        \Magento\Framework\App\ResourceConnection $resourceConnection
     ) {
         $this->productRepository = $productRepository;
         $this->objectManager = $objectManager;
@@ -87,6 +92,7 @@ class Product
         $this->logger = $logger;
         $this->indexerCollectionFactory = $indexerCollectionFactory;
         $this->searchCriteriaBuilder = $searchCriteriaBuilder;
+        $this->resourceConnection = $resourceConnection;
     }
 
     /**
@@ -359,7 +365,7 @@ class Product
      * @throws InputException
      * @throws StateException
      */
-    public function disableProductsThatAreNotInList(string $sourceCode, array $skuList, $sourceCodeFieldName = 'source_code')
+    public function disableProductsThatAreNotInList(string $sourceCode, array $skuList, $sourceCodeFieldName = 'source_code', $removeStoreBasedStatusValue = false)
     {
         $limit = 100;
         $currentPage = 1;
@@ -387,9 +393,9 @@ class Product
             $this->logger->info('Disabling old products. Progress: ' . $limit * $currentPage);
             foreach ($oldProductsToDisable->getItems() as $product) {
                 try {
-                    $this->disableProduct($product);
+                    $this->disableProduct($product, $removeStoreBasedStatusValue);
                     $this->getReport()->increaseByNumber($this->report::KEY_STATUS_CHANGED_TO_DISABLED);
-                    $this->logger->info($product->getSku() . ' Not exists in feed. Updated status to disabled');
+                    $this->logger->info($product->getSku() . ' Not exists in feed. Updated status to disabled.');
                 } catch (\Throwable $t) {
                     $errorMessage = $product->getSku() . ' Failed to disable old product.'
                         . ' Error: ' . $t->getMessage();
@@ -399,6 +405,15 @@ class Product
             }
             $oldProductsToDisable = $this->getProductsBySkuList($collectedOldProductsSkuList, $limit, ++$currentPage);
         }
+    }
+
+    public function getAllStoreIds()
+    {
+        $storeIds = [];
+        foreach ($this->storeManager->getStores(true) as $store) {
+            $storeIds[] = $store->getId();
+        }
+        return $storeIds;
     }
 
     /**
@@ -487,10 +502,24 @@ class Product
      * @throws InputException
      * @throws StateException
      */
-    public function disableProduct(ProductInterface $product)
+    public function disableProduct(ProductInterface $product, $removeStoreBasedStatusValue)
     {
         $product->setStatus(Status::STATUS_DISABLED);
         $this->productRepository->save($product);
+
+        if ($removeStoreBasedStatusValue) {
+            $row = $this->resourceConnection->getConnection()->fetchRow("select attribute_id, backend_type from eav_attribute where attribute_code = 'status' and entity_type_id = 4");
+            $statusAttributeId = $row['attribute_id'];
+            $statusTableName = 'catalog_product_entity_' . $row['backend_type'];
+
+            $sql = "DELETE FROM $statusTableName WHERE attribute_id = :attribute_id AND store_id != :store_id AND entity_id = :entity_id";
+
+            $this->resourceConnection->getConnection()->query($sql, [
+                'attribute_id' => $statusAttributeId,
+                'store_id' => 0,
+                'entity_id' => $product->getEntityId(),
+            ]);
+        }
     }
 
     public function markIndexesAsInvalid()
