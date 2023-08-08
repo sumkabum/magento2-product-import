@@ -522,10 +522,15 @@ class Product
         }
     }
 
-    public function markIndexesAsInvalid()
+    public function markIndexesAsInvalid($indexerIds = [])
     {
         $indexers = $this->indexerCollectionFactory->create()->getItems();
         foreach ($indexers as $indexer) {
+            if (count($indexerIds) > 0) {
+                if (!in_array($indexer->getData('indexer_id'), $indexerIds)) {
+                    continue;
+                }
+            }
             $indexer->invalidate();
         }
     }
