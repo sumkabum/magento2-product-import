@@ -36,4 +36,14 @@ class Scheduler
         ;
         return ($jobsCollection->count() > 0) ? $jobsCollection->getFirstItem() : null;
     }
+
+    public function scheduleAt($jobCode, $dateTime)
+    {
+        $nextJob = $this->getNextJob($jobCode);
+        if (!$nextJob) {
+            throw Exception('Unable to start cron job at: ' . $dateTime->format('Y-m-d H:i:s') . '. Next job not found. Code: ' . $jobCode);
+        }
+        $nextJob->setData('scheduled_at', $dateTime->format('Y-m-d H:i:s'));
+        $nextJob->save($nextJob);
+    }
 }
