@@ -693,7 +693,7 @@ class ProductAttribute
             $attribute = $this->getAttribute($attributeCode);
             foreach ($optionStoreLabels as $optionStoreLabel) {
                 foreach ($attribute->getOptions() as $optionInMagento) {
-                    if ($optionStoreLabel->getDefaultLabel() === $optionInMagento->getLabel()) {
+                    if (trim(strtolower($optionStoreLabel->getDefaultLabel())) === trim(strtolower($optionInMagento->getLabel()))) {
                         $eavAttributeOptionValue = $this->getEavAttributeOptionValue($optionInMagento->getValue(), $optionStoreLabel->getStoreId());
                         $message = 'option store label attribute_code: ' . $attributeCode . ' default label: ' . $optionStoreLabel->getDefaultLabel() . ' label: ' . $optionStoreLabel->getLabel() . ' store_id: ' . $optionStoreLabel->getStoreId();
                         if (!$eavAttributeOptionValue) {
