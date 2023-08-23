@@ -27,6 +27,10 @@ class DataRow
      */
     public $parentSku;
     /**
+     * @var string
+     */
+    public $parentSkuGrouped;
+    /**
      * @var bool
      */
     public $needsUpdatingInMagento = true;

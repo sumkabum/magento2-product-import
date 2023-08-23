@@ -7,9 +7,11 @@ use Magento\Catalog\Api\ProductLinkRepositoryInterface;
 use Magento\Catalog\Model\Product;
 use Magento\Catalog\Model\Product\Attribute\Source\Status;
 use Magento\Catalog\Model\Product\Type;
+use Magento\Catalog\Model\ProductRepository;
 use Magento\ConfigurableProduct\Model\Product\Type\Configurable;
 use Magento\Framework\App\ObjectManager;
 use Magento\Framework\ObjectManagerInterface;
+use Magento\GroupedProduct\Model\Product\Type\Grouped;
 use Sumkabum\Magento2ProductImport\Repository\SumkabumData;
 use Sumkabum\Magento2ProductImport\Service\Image\ConsumerImageData;
 use Sumkabum\Magento2ProductImport\Service\Magento\ProductImage;
@@ -44,6 +46,10 @@ class Importer
      */
     private $childDataRowsByConfigurableSku = [];
     /**
+     * @var []DataRow[]
+     */
+    private $childDataRowsByGroupedSku = [];
+    /**
      * @var ProductCollectionCache
      */
     private $productCollectionCache;
@@ -57,6 +63,7 @@ class Importer
     private $importerStop;
 
     public $checkForStopRequest = false;
+    private ProductRepository $productRepository;
 
     public function __construct(
         \Sumkabum\Magento2ProductImport\Service\Magento\Product $productService,
@@ -65,7 +72,8 @@ class Importer
         ObjectManagerInterface $objectManager,
         ProductCollectionCache $productCollectionCache,
         SumkabumData $sumkabumData,
-        ImporterStop $importerStop
+        ImporterStop $importerStop,
+        ProductRepository $productRepository
     ) {
 
         $this->productService = $productService;
@@ -75,6 +83,7 @@ class Importer
         $this->productCollectionCache = $productCollectionCache;
         $this->sumkabumData = $sumkabumData;
         $this->importerStop = $importerStop;
+        $this->productRepository = $productRepository;
     }
 
     /**
@@ -215,11 +224,39 @@ class Importer
             }
         }
 
+        // grouped products
+        $dataRowsGrouped = $this->collectGroupedDataRows($dataRows);
+        foreach ($dataRowsGrouped as $dataRowGrouped) {
+            $dataRowsSimple = $this->getSimpleProductsForGrouped($dataRowGrouped->mappedDataFields['sku'], $dataRows);
+
+            $associated_array = [];
+            $associated_product_position = 0;
+            foreach ($dataRowsSimple as $dataRowSimple) {
+                $associated_product_position++;
+                $product_link_interface = ObjectManager::getInstance()->create(\Magento\Catalog\Api\Data\ProductLinkInterface::class);
+
+                $product_link_interface->setSku($dataRowGrouped->mappedDataFields['sku'])
+                    ->setLinkType('associated')
+                    ->setLinkedProductSku($dataRowSimple->mappedDataFields['sku'])
+                    ->setLinkedProductType($dataRowSimple->mappedDataFields['type_id'])
+                    ->setPosition($associated_product_position)
+                    ->getExtensionAttributes()
+                    ->setQty(0);
+                $associated_array[] = $product_link_interface;
+            }
+            $grouped_product = $this->productService->getProduct($dataRowGrouped->mappedDataFields['sku']);
+            $grouped_product->setTypeId(Grouped::TYPE_CODE);
+            $grouped_product->setProductLinks($associated_array);
+
+            $this->productRepository->save($grouped_product);
+        }
+
+        // product links
         $this->removeInvalidProductLinks($dataRows);
         $i = 0;
         foreach ($dataRows as $dataRow) {
             $i++;
-            if ($i % 10 == 0) {
+            if ($i % 100 == 0) {
                 $this->logger->info('progress update product links: ' . $i . ' of ' . $count);
             }
             try {
@@ -463,6 +500,30 @@ class Importer
         return $configurableSkus;
     }
 
+    /**
+     * @param array $dataRows
+     * @return DataRow[]
+     */
+    private function collectGroupedDataRows(array $dataRows): array
+    {
+        // collect configurable skus
+        $groupedSkus = [];
+        foreach ($dataRows as $dataRow) {
+            if (empty($dataRow->parentSkuGrouped)) {
+                continue;
+            }
+            $groupedSkus[$dataRow->parentSkuGrouped] = $dataRow->parentSkuGrouped;
+        }
+
+        $dataRowsGrouped = [];
+        foreach ($dataRows as $dataRow) {
+            if (in_array($dataRow->mappedDataFields['sku'], $groupedSkus)) {
+                $dataRowsGrouped[$dataRow->mappedDataFields['sku']] = $dataRow;
+            }
+        }
+        return $dataRowsGrouped;
+    }
+
     public function convertChildrenToSimpleIfLinkableAttributesEmpty(array $dataRows, array $linkableAttributeCodes): array
     {
         $configurableSkus = $this->collectConfigurableSkus($dataRows);
@@ -511,6 +572,22 @@ class Importer
     }
 
     /**
+     * @param $groupedSku
+     * @param DataRow[] $dataRows
+     * @return DataRow[]
+     */
+    public function getSimpleProductsForGrouped($groupedSku, array $dataRows): array
+    {
+        if (count($this->childDataRowsByGroupedSku) == 0) {
+            foreach ($dataRows as $dataRow) {
+                $this->childDataRowsByGroupedSku[$dataRow->parentSkuGrouped][] = $dataRow;
+            }
+        }
+
+        return $this->childDataRowsByGroupedSku[$groupedSku] ?? [];
+    }
+
+    /**
      * @param DataRow[] $dataRows
      * @return DataRow[]
      * @throws Exception
@@ -528,7 +605,7 @@ class Importer
                 throw new Exception($dataRow->mappedDataFields['sku'] . ' Unable to get configurable dataRows. missing key type_id');
             }
 
-            if ($dataRow->mappedDataFields['type_id'] == Type::TYPE_SIMPLE) {
+            if ($dataRow->mappedDataFields['type_id'] != Configurable::TYPE_CODE) {
                 $resultNotConfigurableDataRows[] = $dataRow;
             }
         }

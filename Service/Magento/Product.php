@@ -502,7 +502,7 @@ class Product
      * @throws InputException
      * @throws StateException
      */
-    public function disableProduct(ProductInterface $product, $removeStoreBasedStatusValue)
+    public function disableProduct(ProductInterface $product, $removeStoreBasedStatusValue = false)
     {
         $product->setStatus(Status::STATUS_DISABLED);
         $this->productRepository->save($product);
