@@ -8,4 +8,5 @@ class DataRowCategory
     public $id;
     public $parent_id;
     public $mappedDataFields;
+    public $imageUrl;
 }

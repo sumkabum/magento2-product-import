@@ -4,9 +4,11 @@ namespace Sumkabum\Magento2ProductImport\Service\Magento;
 use Magento\Catalog\Api\CategoryRepositoryInterface;
 use Magento\Catalog\Model\ResourceModel\Category\Collection;
 use Magento\Framework\App\Area;
+use Magento\Framework\App\Filesystem\DirectoryList;
 use Magento\Framework\App\ObjectManager;
 use Magento\Framework\DataObject;
 use Magento\Framework\Exception\CouldNotSaveException;
+use Magento\Framework\Filesystem;
 use Magento\Store\Model\StoreManagerInterface;
 use Sumkabum\Magento2ProductImport\Service\DataRowCategory;
 use Sumkabum\Magento2ProductImport\Service\Logger;
@@ -37,12 +39,14 @@ class CategoryByDataRow
     private $cacheGetOrCreateCategoryUsing = [];
 
     private $cacheGetMagentoCategoryIds = [];
+    private Filesystem $filesystem;
 
     public function __construct(
         Logger $logger,
         StoreManagerInterface $storeManager,
         CategoryAttribute $categoryAttributeService,
-        CategoryRepositoryInterface $categoryRepository
+        CategoryRepositoryInterface $categoryRepository,
+        Filesystem $filesystem
     ) {
         $this->logger = $logger;
         $this->storeManager = $storeManager;
@@ -56,6 +60,7 @@ class CategoryByDataRow
             $state->setAreaCode(Area::AREA_GLOBAL);
         } catch (\Exception $e) { }
 
+        $this->filesystem = $filesystem;
     }
 
     public function disableCategoriesNotInList(array $validSourceIdsList, string $sourceCode, $fieldNameSourceCode = self::CATEGORY_FIELD_NAME_SOURCE_CODE, string $fieldNameSourceId = self::CATEGORY_FIELD_NAME_SOURCE_ID)
@@ -193,6 +198,28 @@ class CategoryByDataRow
             ->setIncludeInMenu($dataRowCategory->mappedDataFields['include_in_menu'] ?? true);
 
         $action = $category->getEntityId() ? 'updated' : 'created';
+
+        if (!empty($dataRowCategory->imageUrl)) {
+
+            $imageFilename = basename($dataRowCategory->imageUrl);
+            $destinationPath = $this->filesystem->getDirectoryRead(DirectoryList::MEDIA)->getAbsolutePath() . '/catalog/category/' . $imageFilename;
+            $fh = fopen($destinationPath, 'w+');
+
+            $ch = curl_init($dataRowCategory->imageUrl);
+            curl_setopt($ch, CURLOPT_FILE, $fh);
+            curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+            curl_exec($ch);
+
+            if (empty(curl_error($ch))) {
+                $category->setImage(basename($dataRowCategory->imageUrl), ['image', 'small_image', 'thumbnail'], true, false);
+                $this->logger->info('Downloaded image for category. id: ' . $category->getId() . ' url: ' . $dataRowCategory->imageUrl);
+            } else {
+                $this->logger->info('Failed to add category image. categoryName: ' . $dataRowCategory->mappedDataFields['name'] . ' imageUrl: ' . $dataRowCategory->imageUrl . ' error: ' . curl_error($ch));
+            }
+            curl_close($ch);
+            fclose($fh);
+        }
+
         /** @var \Magento\Catalog\Model\Category $category */
         $category = $this->categoryRepository->save($category);
         $this->logger->info($action . ' category. id: ' . $category->getId() . ' name: ' . $category->getName());
