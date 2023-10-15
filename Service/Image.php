@@ -32,10 +32,13 @@ class Image
      * @var int|null
      */
     private $position;
+
+    private $timestamp;
     /**
      * @var string
      */
     private $username;
+
 
     /**
      * @var string
@@ -167,6 +170,24 @@ class Image
     public function setPosition(?int $position): Image
     {
         $this->position = $position;
+        return $this;
+    }
+
+    /**
+     * @return int|null
+     */
+    public function getTimestamp(): ?int
+    {
+        return $this->timestamp;
+    }
+
+    /**
+     * @param int $timestamp
+     * @return Image
+     */
+    public function setTimestamp(int $timestamp): Image
+    {
+        $this->timestamp = $timestamp;
         return $this;
     }
 

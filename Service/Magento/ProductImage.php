@@ -143,6 +143,9 @@ class ProductImage
         }
         $this->emulation->startEnvironmentEmulation(0, 'adminhtml');
 
+        /** @var DirectoryList $directoryList */
+        $directoryList = ObjectManager::getInstance()->get(DirectoryList::class);
+
         $this->galleryReadHandler->execute($product);
 
         $existingImages = $product->getMediaGalleryEntries();
@@ -161,8 +164,21 @@ class ProductImage
                     && file_exists($this->getCatalogProductImageFullPath($existingImage->getFile()))
                     && !isset($alreadyCheckedExistingImageFileNames[$this->getFilenameFromUrl($image->getUrl())])
                 ) {
+
                     $alreadyCheckedExistingImageFileNames[$this->getFilenameFromUrl($image->getUrl())] = $this->getFilenameFromUrl($image->getUrl());
                     $needsDelete = false;
+
+                    if ($image->getTimestamp()) {
+                        $dateTimeImportImage = (new \DateTime())->setTimestamp($image->getTimestamp());
+                        $existingImageFullPath = $directoryList->getPath($directoryList::MEDIA) . '/catalog/product' . $existingImage->getFile();
+                        $timestamp = filemtime($existingImageFullPath);
+                        $dateTimeLocalFile = (new \DateTime())->setTimestamp($timestamp);
+
+                        if ($dateTimeImportImage > $dateTimeLocalFile) {
+                            $needsDelete = true;
+                        }
+                    }
+
                     break;
                 }
             }
