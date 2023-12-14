@@ -53,18 +53,12 @@ class CategoryByDataRow
         $this->categoryAttributeService = $categoryAttributeService;
         $this->categoryRepository = $categoryRepository;
 
-        try {
-            $this->storeManager->setCurrentStore(0);
-            /** @var \Magento\Framework\App\State $state */
-            $state = ObjectManager::getInstance()->get(\Magento\Framework\App\State::class);
-            $state->setAreaCode(Area::AREA_GLOBAL);
-        } catch (\Exception $e) { }
-
         $this->filesystem = $filesystem;
     }
 
     public function disableCategoriesNotInList(array $validSourceIdsList, string $sourceCode, $fieldNameSourceCode = self::CATEGORY_FIELD_NAME_SOURCE_CODE, string $fieldNameSourceId = self::CATEGORY_FIELD_NAME_SOURCE_ID)
     {
+        $this->setAreaCode();
         /** @var Collection $categoryCollection */
         $categoryCollection = ObjectManager::getInstance()->create(Collection::class);
         $categoryCollection
@@ -72,8 +66,8 @@ class CategoryByDataRow
             ->addAttributeToSelect('*')
             ->addFieldToFilter($fieldNameSourceCode, $sourceCode)
             ->addFieldToFilter([
-              ['attribute' => $fieldNameSourceId, 'nin' => $validSourceIdsList],
-              ['attribute' => $fieldNameSourceId, 'null' => true]
+                ['attribute' => $fieldNameSourceId, 'nin' => $validSourceIdsList],
+                ['attribute' => $fieldNameSourceId, 'null' => true]
             ])
             ->addFieldToFilter('is_active', 1)
             ->load();
@@ -102,6 +96,7 @@ class CategoryByDataRow
 
     public function getMagentoCategoryIds(array $sourceIds, string $sourceCode, $fieldNameSourceCode = self::CATEGORY_FIELD_NAME_SOURCE_CODE, string $fieldNameSourceId = self::CATEGORY_FIELD_NAME_SOURCE_ID)
     {
+        $this->setAreaCode();
         /** @var Collection $categoryCollection */
         $categoryCollection = ObjectManager::getInstance()->create(Collection::class);
         $categoryCollection
@@ -189,6 +184,7 @@ class CategoryByDataRow
      */
     public function updateCategory(\Magento\Catalog\Model\Category $category, DataRowCategory $dataRowCategory, int $parentId): \Magento\Catalog\Model\Category
     {
+        $this->setAreaCode();
         foreach ($dataRowCategory->mappedDataFields as $mappedDataKey => $mappedDataValue) {
             $category->setData($mappedDataKey, $mappedDataValue);
         }
@@ -313,6 +309,7 @@ class CategoryByDataRow
      */
     public function importDataRowCategoryPath(array $dataRowCategoryPath): array
     {
+        $this->setAreaCode();
         $allPossibleAttributeCodes = [];
         foreach ($dataRowCategoryPath as $dataRowCategory) {
             foreach ($dataRowCategory->mappedDataFields as $key => $value) {
@@ -335,5 +332,15 @@ class CategoryByDataRow
             $sourceCategoryIdCreated[$dataRowCategory->id] = $dataRowCategory;
         }
         return $magentoCategories;
+    }
+
+    private function setAreaCode()
+    {
+        try {
+            $this->storeManager->setCurrentStore(0);
+            /** @var \Magento\Framework\App\State $state */
+            $state = ObjectManager::getInstance()->get(\Magento\Framework\App\State::class);
+            $state->setAreaCode(Area::AREA_GLOBAL);
+        } catch (\Exception $e) { }
     }
 }
