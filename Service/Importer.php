@@ -330,7 +330,7 @@ class Importer
                 $this->importerStop->checkForImporterStopRequestAndExit();
             }
             $this->report->increaseByNumber($this->report::KEY_PRODUCTS_UPDATED);
-            return $this->productService->save($dataRow->mappedDataFields, $doNotUpdateFields, $dataRow->storeBasedAttributeValuesArray);
+            return $this->productService->save($dataRow->mappedDataFields, $doNotUpdateFields, $dataRow->storeBasedAttributeValuesArray, $dataRow->storeBasedAttributeValuesToRemove);
         } else {
             $this->report->increaseByNumber($this->report::KEY_PRODUCTS_DIDNT_NEED_UPDATING);
             return $this->productService->getProduct($dataRow->mappedDataFields['sku']);
@@ -435,6 +435,7 @@ class Importer
             }
 
             // find first child
+            /** @var DataRow $firstChildDataRow */
             $firstChildDataRow = $this->getSimpleProductsForConfigurable($configurableSku, $dataRows)[0] ?? null;
             if ($firstChildDataRow) {
                 if (!count($configurableDataRow->images)) {
@@ -454,6 +455,14 @@ class Importer
                                 continue;
                             }
                             $configurableDataRow->addStoreBasedValue($storeBasedAttributeValues->storeId, $storeBasedAttributeCode, $storeBasedAttributeValue);
+                        }
+                    }
+                    foreach ($firstChildDataRow->storeBasedAttributeValuesToRemove as $storeId => $storeBasedAttributeValues) {
+                        foreach ($storeBasedAttributeValues as $storeBasedAttributeValue) {
+                            if ($storeBasedAttributeValue != $fieldToCopy) {
+                                continue;
+                            }
+                            $configurableDataRow->removeStoreBasedValue($storeId, $storeBasedAttributeValue);
                         }
                     }
                 }

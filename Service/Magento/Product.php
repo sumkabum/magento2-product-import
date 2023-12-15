@@ -137,13 +137,15 @@ class Product
     /**
      * @param array $productData
      * @param array $doNotUpdateFields
-     * @param StoreBasedAttributeValues[] $storeBasedAttributeValuesArray
-     * @return ProductInterface|mixed
+     * @param array $storeBasedAttributeValuesArray
+     * @param array $storeBasedAttributeValuesToRemove
+     * @return ProductInterface
      * @throws CouldNotSaveException
      * @throws InputException
      * @throws StateException
+     * @throws \Magento\UrlRewrite\Model\Exception\UrlAlreadyExistsException
      */
-    public function save(array $productData, array $doNotUpdateFields = [], array $storeBasedAttributeValuesArray = []): ProductInterface
+    public function save(array $productData, array $doNotUpdateFields = [], array $storeBasedAttributeValuesArray = [], array $storeBasedAttributeValuesToRemove = []): ProductInterface
     {
         $this->setAreaCode();
         $product = $this->getProduct($productData['sku']);
@@ -211,6 +213,15 @@ class Product
             }
         }
 
+        if (count($storeBasedAttributeValuesToRemove) > 0) {
+            foreach ($storeBasedAttributeValuesToRemove as $storeId => $attrCodes) {
+                foreach ($attrCodes as $attrCode) {
+                    $this->removeStoreBasedAttributeValue($product->getId(), $storeId, $attrCode);
+
+                }
+            }
+        }
+
         return $product;
     }
 
@@ -219,6 +230,23 @@ class Product
         /** @var ProductAction $productAction */
         $productAction = $this->objectManager->get(ProductAction::class);
         $productAction->updateAttributes($productIds, $productData, $storeId);
+    }
+
+    public function removeStoreBasedAttributeValue($productId, $storeId, $attributeCode)
+    {
+        /** @var \Magento\Catalog\Model\Product\Attribute\Repository $productAttributeRepository */
+        $productAttributeRepository = ObjectManager::getInstance()->get(\Magento\Catalog\Model\Product\Attribute\Repository::class);
+        $attribute = $productAttributeRepository->get($attributeCode);
+
+        $table = $attribute->getBackend()->getTable();
+
+        $sql = "delete from $table where attribute_id = :attribute_id and store_id = :store_id and entity_id = :entity_id limit 1";
+        $this->resourceConnection->getConnection()->query($sql, [
+            'attribute_id' => $attribute->getAttributeId(),
+            'store_id' => $storeId,
+            'entity_id' => $productId,
+        ]);
+
     }
 
     /**

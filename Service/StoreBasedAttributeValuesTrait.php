@@ -7,6 +7,7 @@ Trait StoreBasedAttributeValuesTrait
      * @var StoreBasedAttributeValues[]
      */
     public $storeBasedAttributeValuesArray = [];
+    public $storeBasedAttributeValuesToRemove = [];
 
     public function addStoreBasedValue(int $storeId, string $attributeCode, ?string $attributeValue)
     {
@@ -17,5 +18,13 @@ Trait StoreBasedAttributeValuesTrait
         }
 
         $this->storeBasedAttributeValuesArray[$storeId]->mappedDataFields[$attributeCode] = $attributeValue;
+    }
+
+    public function removeStoreBasedValue(int $storeId, $attributeCode)
+    {
+        if (!isset($this->storeBasedAttributeValuesToRemove[$storeId])) {
+            $this->storeBasedAttributeValuesToRemove[$storeId] = [];
+        }
+        $this->storeBasedAttributeValuesToRemove[$storeId][$attributeCode] = $attributeCode;
     }
 }
