@@ -133,6 +133,13 @@ class Importer
         $this->productImageService->setLogger($this->logger);
         $this->productImageService->setReport($this->getReport());
 
+        // grouped products fix type_id
+        $dataRowsGrouped = $this->collectGroupedDataRows($dataRows);
+        foreach ($dataRowsGrouped as $dataRowGrouped) {
+            $dataRowGrouped->mappedDataFields['type_id'] = Grouped::TYPE_CODE;
+        }
+
+        // configurable products
         $configurableDataRows = $this->getConfigurableProducts($dataRows, $fieldsToCopyFromSimpleToConfigurable);
         $count = count($configurableDataRows);
 
@@ -256,7 +263,7 @@ class Importer
         $i = 0;
         foreach ($dataRows as $dataRow) {
             $i++;
-            if ($i % 100 == 0) {
+            if ($i % 1000 == 0) {
                 $this->logger->info('progress update product links: ' . $i . ' of ' . $count);
             }
             try {
@@ -526,7 +533,7 @@ class Importer
 
         $dataRowsGrouped = [];
         foreach ($dataRows as $dataRow) {
-            if (in_array($dataRow->mappedDataFields['sku'], $groupedSkus)) {
+            if (in_array($dataRow->mappedDataFields['sku'], $groupedSkus, true)) {
                 $dataRowsGrouped[$dataRow->mappedDataFields['sku']] = $dataRow;
             }
         }
