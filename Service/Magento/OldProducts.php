@@ -133,8 +133,13 @@ class OldProducts
         where
             table_status.value = 1
             and table_source_code.value = :source_code
-            and cpe.sku not in ($bindParamsNotInString);
         ";
+
+        if (count($bindParamsNotIn) > 0) {
+            $sql .= "
+                and cpe.sku not in ($bindParamsNotInString);
+            ";
+        }
 
         $bindParams['source_code'] = $sourceCode;
 
