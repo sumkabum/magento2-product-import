@@ -41,7 +41,8 @@ class Scheduler
     {
         $nextJob = $this->getNextJob($jobCode);
         if (!$nextJob) {
-            throw new \Exception('Unable to start cron job at: ' . $dateTime->format('Y-m-d H:i:s') . '. Next job not found. Code: ' . $jobCode);
+            $this->addAndScheduleAt($jobCode, $dateTime);
+            return;
         }
         $nextJob->setData('scheduled_at', $dateTime->format('Y-m-d H:i:s'));
         $nextJob->save($nextJob);
