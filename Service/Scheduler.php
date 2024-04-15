@@ -46,4 +46,15 @@ class Scheduler
         $nextJob->setData('scheduled_at', $dateTime->format('Y-m-d H:i:s'));
         $nextJob->save($nextJob);
     }
+
+    public function addAndScheduleAt($jobCode, $dateTime)
+    {
+        /** @var \Magento\Cron\Model\Schedule $job */
+        $job = ObjectManager::getInstance()->create(\Magento\Cron\Model\Schedule::class);
+        $nextJob->setData('job_code', $jobCode);
+        $nextJob->setData('status', 'pending');
+        $nextJob->setData('created_at', (new \DateTime())->format('Y-m-d H:i:s'));
+        $nextJob->setData('scheduled_at', $dateTime->format('Y-m-d H:i:s'));
+        $nextJob->save($nextJob);
+    }
 }
