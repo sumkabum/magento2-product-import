@@ -41,7 +41,18 @@ class Logger extends AbstractLogger
      * @return void|null
      * @throws FileSystemException
      */
-    public function log($level, $message, array $context = [])
+    /**
+     * Logs with an arbitrary level.
+     *
+     * @param mixed   $level
+     * @param string|\Stringable $message
+     * @param mixed[] $context
+     *
+     * @return void
+     *
+     * @throws \Psr\Log\InvalidArgumentException
+     */
+    public function log($level, string|\Stringable $message, array $context = []): void
     {
         $text = (new DateTime())->format('Y-m-d H:i:s') . ' [' . $level . ']: ';
         if ($message instanceof Throwable) {

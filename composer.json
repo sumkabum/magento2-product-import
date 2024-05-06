@@ -6,7 +6,9 @@
             "email": "sumkabum@gmail.com"
         }
     ],
-    "require": {},
+    "require": {
+        "magento/product-community-edition" : ">=2.4.7"
+    },
     "autoload": {
         "psr-4": { "Sumkabum\\Magento2ProductImport\\": "" },
         "files": [ "registration.php" ]
