@@ -6,6 +6,7 @@ use Magento\Catalog\Api\Data\ProductInterface;
 use Magento\Catalog\Api\ProductRepositoryInterface;
 use Magento\Catalog\Model\Product\Attribute\Source\Status;
 use Magento\Framework\App\Area;
+use Magento\Framework\App\ObjectManager;
 use Magento\Framework\App\State;
 use Magento\Framework\Exception\CouldNotSaveException;
 use Magento\Framework\Exception\InputException;
@@ -29,6 +30,7 @@ class OldProducts
      */
     private $searchCriteriaBuilder;
     private $resourceConnection;
+    private $stockRegistry;
 
     public function __construct (
         ProductRepositoryInterface $productRepository,
@@ -38,7 +40,8 @@ class OldProducts
         Logger $logger,
         \Magento\Framework\Api\SearchCriteriaBuilder $searchCriteriaBuilder,
         Report $report,
-        \Magento\Framework\App\ResourceConnection $resourceConnection
+        \Magento\Framework\App\ResourceConnection $resourceConnection,
+        \Magento\CatalogInventory\Api\StockRegistryInterface $stockRegistry
     ) {
 
         $this->productRepository = $productRepository;
@@ -49,6 +52,7 @@ class OldProducts
         $this->report = $report;
         $this->searchCriteriaBuilder = $searchCriteriaBuilder;
         $this->resourceConnection = $resourceConnection;
+        $this->stockRegistry = $stockRegistry;
     }
 
     protected function setAreaCode()
@@ -59,12 +63,40 @@ class OldProducts
         } catch (\Exception $e) { }
     }
 
-    /**
-     * @param string $sourceCode
-     * @param array $skuList
-     * @param $sourceCodeFieldName
-     * @return void
-     */
+    public function setProductsAsOutOfStockThatAreNotInTheList(string $sourceCode, array $skuList, string $sourceCodeFieldName = 'source_code')
+    {
+        $products = $this->getProductsToSetAsOutOfStock($sourceCode, $skuList, $sourceCodeFieldName);
+        foreach ($products as $product) {
+            $this->setProductAsOutOfStock($product->getSku());
+            $this->getReport()->increaseByNumber('Stock changed to out of stock');
+            $this->logger->info($product->getSku() . ' Not exists in feed. Stock updated to out of stock');
+        }
+    }
+
+    public function getProductsToSetAsOutOfStock(string $sourceCode, array $skuList, $sourceCodeFieldName = 'source_code')
+    {
+        /** @var \Magento\Catalog\Model\ResourceModel\Product\Collection $collection */
+        $collection = ObjectManager::getInstance()->create(\Magento\Catalog\Model\ResourceModel\Product\Collection::class);
+
+        /** @var \Magento\CatalogInventory\Helper\Stock $stockFilter */
+        $stockFilter = ObjectManager::getInstance()->get(\Magento\CatalogInventory\Helper\Stock::class);
+        $stockFilter->addInStockFilterToCollection($collection);
+
+        $collection
+            ->addFieldToFilter($sourceCodeFieldName, $sourceCode)
+            ->addFieldToFilter('sku', ['nin' => $skuList]);
+
+        return $collection;
+    }
+
+    protected function setProductAsOutOfStock($productId)
+    {
+        $stockItem = $this->stockRegistry->getStockItem($productId);
+        $stockItem->setQty(0);
+        $stockItem->setIsInStock(0);
+        $this->stockRegistry->updateStockItemBySku($productId, $stockItem);
+    }
+
     public function disableProductsThatAreNotInList(string $sourceCode, array $skuList, string $sourceCodeFieldName = 'source_code')
     {
         $skusToDisable = $this->getSkusToDisable($sourceCode, $skuList, $sourceCodeFieldName);
@@ -171,6 +203,45 @@ class OldProducts
         }
 
         return $productList;
+    }
+
+    public function getInStockProductsCountInMagento(string $sourceCode)
+    {
+        $sql = "select
+            count(*)
+        from catalog_product_entity cpe
+            left join cataloginventory_stock_status css on cpe.entity_id = css.product_id and css.website_id = 0
+            left join catalog_product_entity_varchar cpev on cpe.entity_id = cpev.entity_id and cpev.attribute_id = (select attribute_id from eav_attribute ea where attribute_code = 'source_code' and entity_type_id = 4)  and cpev.store_id = 0
+        where
+            css.stock_status = 1
+            and cpev.value = :source_code
+        ;";
+
+        $bindParams = [
+            'source_code' => $sourceCode
+        ];
+
+        return $this->resourceConnection->getConnection()->fetchOne($sql, $bindParams);
+    }
+
+    private function getEnabledProductCountInMagento(string $sourceCode)
+    {
+
+        $sql = "select
+            count(*)
+        from catalog_product_entity cpe
+            left join catalog_product_entity_int cpei on cpe.entity_id = cpei.entity_id and cpei.attribute_id = (select attribute_id from eav_attribute ea where attribute_code = 'status' and entity_type_id = 4) and cpei.store_id = 0
+            left join catalog_product_entity_varchar cpev on cpe.entity_id = cpev.entity_id and cpev.attribute_id = (select attribute_id from eav_attribute ea where attribute_code = 'source_code' and entity_type_id = 4)  and cpev.store_id = 0
+        where
+            cpei.value = 1
+            and cpev.value = :source_code
+        ;";
+
+        $bindParams = [
+            'source_code' => $sourceCode
+        ];
+
+        return $this->resourceConnection->getConnection()->fetchOne($sql, $bindParams);
     }
 
     /**
