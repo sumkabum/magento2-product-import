@@ -78,7 +78,7 @@ class Product
         State $state,
         ProductAttribute $productAttributeService,
         UrlKey $urlKeyService,
-        Logger $logger,
+        LoggerInterface $logger,
         \Magento\Indexer\Model\Indexer\CollectionFactory $indexerCollectionFactory,
         \Magento\Framework\Api\SearchCriteriaBuilder $searchCriteriaBuilder,
         \Magento\Framework\App\ResourceConnection $resourceConnection

@@ -68,7 +68,7 @@ class Importer
     public function __construct(
         \Sumkabum\Magento2ProductImport\Service\Magento\Product $productService,
         ProductImage $productImageService,
-        Logger $logger,
+        LoggerInterface $logger,
         ObjectManagerInterface $objectManager,
         ProductCollectionCache $productCollectionCache,
         SumkabumData $sumkabumData,
