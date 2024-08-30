@@ -24,6 +24,8 @@ class Report
     const KEY_STATUS_CHANGED_TO_DISABLED = 'Status Changed To Disabled';
     const KEY_ERRORS = 'Errors';
 
+    public $keysSortOrder = [];
+
     /**
      * @return string
      */
@@ -48,11 +50,30 @@ class Report
         $this->messages[$key][] = $message;
     }
 
+    private function sortArrayByKeys(array $array, array $orderArray): array {
+        uksort($array, function($a, $b) use ($orderArray) {
+            $aIndex = array_search($a, $orderArray);
+            $bIndex = array_search($b, $orderArray);
+
+            return $aIndex <=> $bIndex;
+        });
+
+        return $array;
+    }
+
+    public function getMessages(): array
+    {
+        if (count($this->keysSortOrder)) {
+            $this->messages = $this->sortArrayByKeys($this->messages, $this->keysSortOrder);
+        }
+        return $this->messages;
+    }
+
     public function getMessagesAsHtml(): string
     {
         $customMessagesString = '';
 
-        foreach ($this->messages as $key => $value) {
+        foreach ($this->getMessages() as $key => $value) {
 
             if (is_array($value)) {
                 $value = implode('<br>', $value);
@@ -71,7 +92,7 @@ class Report
     {
         $messages = [];
 
-        foreach ($this->messages as $key => $value) {
+        foreach ($this->getMessages() as $key => $value) {
             if (is_array($value)) {
                 $value = implode("\n", $value);
             }
