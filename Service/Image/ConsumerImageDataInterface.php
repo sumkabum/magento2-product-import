@@ -26,4 +26,15 @@ interface ConsumerImageDataInterface
      * @return ConsumerImageDataInterface
      */
     public function setConsumerImageDataRows(array $consumerImageDataRows): ConsumerImageDataInterface;
+
+    /**
+     * @return string
+     */
+    public function getDownloaderClassName(): string;
+
+    /**
+     * @param string $downloaderClassName
+     * @return \Sumkabum\Magento2ProductImport\Service\Image\ConsumerImageData
+     */
+    public function setDownloaderClassName(string $downloaderClassName): \Sumkabum\Magento2ProductImport\Service\Image\ConsumerImageDataInterface;
 }

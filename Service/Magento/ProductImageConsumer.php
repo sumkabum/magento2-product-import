@@ -48,6 +48,12 @@ class ProductImageConsumer
                 ->setIsThumbnail($consumerImageDataRow->isThumbnail())
                 ->setIsSwatchImage($consumerImageDataRow->isSwatchImage())
             ;
+
+            $downloaderClassName = $consumerImageData->getDownloaderClassName();
+            if ($downloaderClassName) {
+                $image->setDownloader(new $downloaderClassName());
+            }
+
             $images[] = $image;
         }
 

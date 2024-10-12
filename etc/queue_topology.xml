@@ -13,4 +13,16 @@
                  destinationType="queue"
                  destination="sumkabum.product.image.import2"/>
     </exchange>
+    <exchange name="sumkabum.product.image.import3-exchange" type="topic" connection="db">
+        <binding id="sumkabum.product.image.import3Binding"
+                 topic="sumkabum.product.image.import3"
+                 destinationType="queue"
+                 destination="sumkabum.product.image.import3"/>
+    </exchange>
+    <exchange name="sumkabum.product.image.import4-exchange" type="topic" connection="db">
+        <binding id="sumkabum.product.image.import4Binding"
+                 topic="sumkabum.product.image.import4"
+                 destinationType="queue"
+                 destination="sumkabum.product.image.import4"/>
+    </exchange>
 </config>

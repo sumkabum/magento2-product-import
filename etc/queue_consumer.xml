@@ -11,4 +11,14 @@
               connection="db"
               consumerInstance="Magento\Framework\MessageQueue\Consumer"
               handler="Sumkabum\Magento2ProductImport\Service\Magento\ProductImageConsumer::updateImages"/>
+    <consumer name="sumkabum.product.image.import3"
+              queue="sumkabum.product.image.import3"
+              connection="db"
+              consumerInstance="Magento\Framework\MessageQueue\Consumer"
+              handler="Sumkabum\Magento2ProductImport\Service\Magento\ProductImageConsumer::updateImages"/>
+    <consumer name="sumkabum.product.image.import4"
+              queue="sumkabum.product.image.import4"
+              connection="db"
+              consumerInstance="Magento\Framework\MessageQueue\Consumer"
+              handler="Sumkabum\Magento2ProductImport\Service\Magento\ProductImageConsumer::updateImages"/>
 </config>
