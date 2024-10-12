@@ -13,4 +13,16 @@
                consumerInstance="Magento\Framework\MessageQueue\Consumer"
                handler="Sumkabum\Magento2ProductImport\Service\Magento\ProductImageConsumer::updateImages"/>
     </broker>
+    <broker topic="sumkabum.product.image.import3" exchange="sumkabum.product.image.import3-exchange" type="db">
+        <queue name="sumkabum.product.image.import3"
+               consumer="sumkabum.product.image.import3"
+               consumerInstance="Magento\Framework\MessageQueue\Consumer"
+               handler="Sumkabum\Magento2ProductImport\Service\Magento\ProductImageConsumer::updateImages"/>
+    </broker>
+    <broker topic="sumkabum.product.image.import4" exchange="sumkabum.product.image.import4-exchange" type="db">
+        <queue name="sumkabum.product.image.import4"
+               consumer="sumkabum.product.image.import4"
+               consumerInstance="Magento\Framework\MessageQueue\Consumer"
+               handler="Sumkabum\Magento2ProductImport\Service\Magento\ProductImageConsumer::updateImages"/>
+    </broker>
 </config>

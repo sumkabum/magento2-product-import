@@ -360,6 +360,12 @@ class Importer
 
                 $consumerImageData = new ConsumerImageData();
                 $consumerImageData->setProductSku($product->getSku());
+                if (count($dataRow->images) > 0) {
+                    $downloader = reset($dataRow->images)->getDownloader();
+                    if ($downloader) {
+                        $consumerImageData->setDownloaderClassName(get_class($downloader));
+                    }
+                }
 
                 /** @var Image\ConsumerImageDataRow[] $consumerImageDataRows */
                 $consumerImageDataRows = [];
@@ -378,7 +384,7 @@ class Importer
 
                 /** @var \Magento\Framework\MessageQueue\PublisherInterface $publisher */
                 $publisher = ObjectManager::getInstance()->get(\Magento\Framework\MessageQueue\PublisherInterface::class);
-                $publisher->publish('sumkabum.product.image.import' . rand(1, 2), $consumerImageData);
+                $publisher->publish('sumkabum.product.image.import' . rand(1, 4), $consumerImageData);
             } else {
 
                 $product = $this->productImageService->updateImages($product, $dataRow->images, $dataRow->removeTmpImages);

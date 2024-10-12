@@ -6,6 +6,7 @@ class ConsumerImageData implements ConsumerImageDataInterface
 {
     private string $productSku;
     private array $consumerImageDataRows = [];
+    private string $downloaderClassName;
 
     /**
      * @return string
@@ -40,6 +41,24 @@ class ConsumerImageData implements ConsumerImageDataInterface
     public function setConsumerImageDataRows(array $consumerImageDataRows): \Sumkabum\Magento2ProductImport\Service\Image\ConsumerImageDataInterface
     {
         $this->consumerImageDataRows = $consumerImageDataRows;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getDownloaderClassName(): string
+    {
+        return $this->downloaderClassName;
+    }
+
+    /**
+     * @param string $downloaderClassName
+     * @return \Sumkabum\Magento2ProductImport\Service\Image\ConsumerImageData
+     */
+    public function setDownloaderClassName(string $downloaderClassName): \Sumkabum\Magento2ProductImport\Service\Image\ConsumerImageDataInterface
+    {
+        $this->downloaderClassName = $downloaderClassName;
         return $this;
     }
 }
