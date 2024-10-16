@@ -255,8 +255,7 @@ class ProductImage
 
         if (!empty($imagesToAdd) || !empty($imagesToDelete) || $this->someThumbnailsMissing($product) && (count($images) > 0)) {
             $firstImage = reset($images) ? reset($images) : null;
-            $this->updateThumbnails($product, $images);
-            $this->updateImagesPositions($product, $images);
+            $this->updateImagesPositionsAndThumbnails($product, $images);
             $this->updateImageLabels($product, $images);
             $product = $this->productRepository->save($product);
         }
@@ -315,10 +314,28 @@ class ProductImage
      * @param Image[] $images
      * @throws LocalizedException
      */
-    public function updateThumbnails(\Magento\Catalog\Model\Product $product, array $images)
+    public function updateImagesPositionsAndThumbnails(\Magento\Catalog\Model\Product $product, array $images)
     {
         $this->galleryReadHandler->execute($product);
+
         $mediaGalleryEntries = $product->getMediaGalleryEntries();
+
+        // update positions
+        foreach ($mediaGalleryEntries as $existingImage) {
+            foreach ($images as $position => $image) {
+                if ($this->areTheFilenamesSame($existingImage->getFile(), $this->getFilenameFromUrl($image->getUrl()))) {
+                    $this->imageProcessor->updateImage($product, $existingImage->getFile(), ['position' => $image->getPosition()]);
+                    break;
+                }
+            }
+        }
+
+        // update thumbnails
+        $mediaGalleryEntries = $product->getMediaGalleryEntries();
+
+        usort($mediaGalleryEntries, function ($a, $b) {
+            return $a->getPosition() <=> $b->getPosition();
+        });
 
         $valuesIsNotSet = [
             'image' => 'image',
@@ -352,27 +369,6 @@ class ProductImage
         if (count($mediaGalleryEntries) > 0) {
             foreach ($valuesIsNotSet as $valueIsNotSet) {
                 $product->setData($valueIsNotSet, $mediaGalleryEntries[0]->getFile());
-            }
-        }
-
-    }
-
-    /**
-     * @param \Magento\Catalog\Model\Product $product
-     * @param Image[] $images
-     * @throws LocalizedException
-     */
-    public function updateImagesPositions(\Magento\Catalog\Model\Product $product, array $images)
-    {
-        $this->galleryReadHandler->execute($product);
-
-        $mediaGalleryEntries = $product->getMediaGalleryEntries();
-        foreach ($mediaGalleryEntries as $existingImage) {
-            foreach ($images as $position => $image) {
-                if ($this->areTheFilenamesSame($existingImage->getFile(), $this->getFilenameFromUrl($image->getUrl()))) {
-                    $this->imageProcessor->updateImage($product, $existingImage->getFile(), ['position' => $image->getPosition()]);
-                    break;
-                }
             }
         }
     }

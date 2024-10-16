@@ -10,6 +10,7 @@ class ConsumerImageDataRow implements ConsumerImageDataRowInterface
     private bool $isSmallImage = false;
     private bool $isThumbnail = false;
     private bool $isSwatchImage = false;
+    private ?int $position = 0;
 
     /**
      * @return string
@@ -118,4 +119,23 @@ class ConsumerImageDataRow implements ConsumerImageDataRowInterface
         $this->isSwatchImage = $isSwatchImage;
         return $this;
     }
+
+    /**
+     * @return int|null
+     */
+    public function getPosition(): ?int
+    {
+        return $this->position;
+    }
+
+    /**
+     * @param int|null $position
+     * @return ConsumerImageDataRowInterface
+     */
+    public function setPosition(?int $position): ConsumerImageDataRowInterface
+    {
+        $this->position = $position;
+        return $this;
+    }
+
 }
