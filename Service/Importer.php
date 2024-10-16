@@ -377,6 +377,7 @@ class Importer
                     $consumerImageDataRow->setIsSmallImage($image->isSmallImage());
                     $consumerImageDataRow->setIsSwatchImage($image->isSwatchImage());
                     $consumerImageDataRow->setLabel($image->getLabel());
+                    $consumerImageDataRow->setPosition($image->getPosition());
                     $consumerImageDataRows[] = $consumerImageDataRow;
                 }
 

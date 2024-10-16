@@ -47,6 +47,7 @@ class ProductImageConsumer
                 ->setIsSmallImage($consumerImageDataRow->isSmallImage())
                 ->setIsThumbnail($consumerImageDataRow->isThumbnail())
                 ->setIsSwatchImage($consumerImageDataRow->isSwatchImage())
+                ->setPosition($consumerImageDataRow->getPosition())
             ;
 
             $downloaderClassName = $consumerImageData->getDownloaderClassName();
