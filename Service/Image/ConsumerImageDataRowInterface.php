@@ -69,4 +69,14 @@ interface ConsumerImageDataRowInterface
      * @return \Sumkabum\Magento2ProductImport\Service\Image\ConsumerImageDataRowInterface
      */
     public function setIsSwatchImage(bool $isSwatchImage): \Sumkabum\Magento2ProductImport\Service\Image\ConsumerImageDataRowInterface;
+    /**
+     * @return int|null
+     */
+    public function getPosition(): ?int;
+
+    /**
+     * @param int|null $position
+     * @return ConsumerImageDataRowInterface
+     */
+    public function setPosition(?int $position): \Sumkabum\Magento2ProductImport\Service\Image\ConsumerImageDataRowInterface;
 }
