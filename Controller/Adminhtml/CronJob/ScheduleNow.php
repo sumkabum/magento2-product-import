@@ -35,15 +35,9 @@ class ScheduleNow extends AbstractAction
         $result->setRefererUrl();
 
         $jobCode = $this->getRequest()->getParam('job_code');
-        $nextJob = $this->magentoSchedulerService->getNextJob($jobCode);
-        if (!$nextJob) {
-            $this->messageManager->addErrorMessage('Job not found with code: ' . $jobCode . '. Probably cron is not enabled');
-            return $result;
-        }
-        $nextJob->setData('scheduled_at', (new \DateTime())->format('Y-m-d H:i:s'));
-        $nextJob->save($nextJob);
+        $this->magentoSchedulerService->scheduleAt($jobCode, new \DateTime());
 
-        $this->messageManager->addSuccessMessage('Job scheduled at . ' . $nextJob->getData('scheduled_at'));
+        $this->messageManager->addSuccessMessage('Job scheduled at . ' . (new \DateTime())->format('Y-m-d H:i:s'));
 
         return $result;
     }
