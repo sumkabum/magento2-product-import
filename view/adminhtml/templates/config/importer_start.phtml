@@ -1,0 +1,26 @@
+<?php
+/** @var \Sumkabum\Magento2ProductImport\Block\System\Config\Form\ImporterStatus $block */
+/** @var \Magento\Framework\Url $url */
+$url = \Magento\Framework\App\ObjectManager::getInstance()->get(\Magento\Framework\UrlInterface::class);
+?>
+<td id="importer-status-ajax-target"></td>
+<script>
+    require([
+            'jquery'
+        ], function (jquery) {
+            setInterval(function () {
+                jquery.ajax({
+                    url: '<?php echo $url->getUrl('sumkabumimporter/config/importStart') ?>',
+                    data: {
+                        form_key: window.FORM_KEY,
+                        job_code: '<?php echo $block::IMPORTER_JOB_CODE ?>'
+                    },
+                    dataType: 'json',
+                    success: function(data) {
+                        jquery('#importer-status-ajax-target').html(data.html);
+                    }
+                })
+            }, 3000);
+        }
+    )
+</script>

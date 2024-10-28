@@ -1,0 +1,36 @@
+<?php
+/** @var SumkabumData $dataRepository */
+/** @var \Sumkabum\Magento2ProductImport\Block\System\Config\Form\ImporterStatus $block */
+
+use Magento\Framework\App\ObjectManager;
+use Magento\Framework\Url;
+use Sumkabum\Magento2ProductImport\Repository\SumkabumData;
+use Sumkabum\Magento2ProductImport\Service\ImporterStatus;
+use Sumkabum\Magento2ProductImport\Service\Scheduler;
+
+/** @var Url $url */
+$url = ObjectManager::getInstance()->get(\Magento\Framework\UrlInterface::class);
+/** @var Scheduler $schedulerService */
+$schedulerService = ObjectManager::getInstance()->get(Scheduler::class);
+$currentRunningJob = $schedulerService->getCurrentRunningJob($block->getData('job_code'));
+if ($currentRunningJob) {
+    $dataRepository = ObjectManager::getInstance()->get(SumkabumData::class);
+    $stopIsRequested = $dataRepository->get(\Sumkabum\Magento2ProductImport\Service\ImporterStop::DATA_KEY_IMPORTER_STOP_REQUESTED);
+    echo __('Import currently running. Started at ') . $currentRunningJob->getData('executed_at') . ' UTC<br>';
+    $progress = $dataRepository->get(ImporterStatus::DATA_KEY_IMPORTER_PROGRESS);
+    echo $dataRepository->get(ImporterStatus::DATA_KEY_IMPORTER_CURRENT_JOB) ?><?php echo $progress ? ': ' . $progress : '';
+    ?>
+    &nbsp;&nbsp;&nbsp;
+    <?php
+} else {
+
+    if ($nextJob = $schedulerService->getNextJob($block->getData('job_code'))) {
+        echo __('Scheduled at ') . $nextJob->getData('scheduled_at') . ' UTC';
+        $startNowUrl = $url->getUrl('sumkabumimporter/cronJob/scheduleNow', ['job_code' => $block->getData('job_code')]);
+        echo ' <button onclick="window.location.href = \'' . $startNowUrl . '\'; return false;">' . __('Schedule now') . '</button>';
+    } else {
+        echo __('Next run not found.');
+        $startNowUrl = $url->getUrl('sumkabumimporter/cronJob/scheduleNow', ['job_code' => $block->getData('job_code')]);
+        echo ' <button onclick="window.location.href = \'' . $startNowUrl . '\'; return false;">' . __('Schedule now') . '</button>';
+    }
+}
