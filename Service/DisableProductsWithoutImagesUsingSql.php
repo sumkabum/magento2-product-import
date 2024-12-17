@@ -213,8 +213,8 @@ class DisableProductsWithoutImagesUsingSql
 
         /** @var \Magento\Framework\DB\Statement\Pdo\Mysql $stmt */
         $stmt = $this->resourceConnection->getConnection()->prepare($sql);
-        $stmt->bindParam('limit', $limit, \PDO::PARAM_INT);
-        $stmt->bindParam('offset', $offset, \PDO::PARAM_INT);
+        $stmt->bindParam('limit', $limit, \PDO::PARAM_INT, 0);
+        $stmt->bindParam('offset', $offset, \PDO::PARAM_INT, 0);
 
         $stmt->_execute();
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
