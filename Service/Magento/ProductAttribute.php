@@ -692,19 +692,26 @@ class ProductAttribute
             /** @var OptionStoreLabel[] $optionStoreLabels */
             $attribute = $this->getAttribute($attributeCode);
             foreach ($optionStoreLabels as $optionStoreLabel) {
-                foreach ($attribute->getOptions() as $optionInMagento) {
-                    if (trim(strtolower($optionStoreLabel->getDefaultLabel())) === trim(strtolower($optionInMagento->getLabel()))) {
-                        $eavAttributeOptionValue = $this->getEavAttributeOptionValue($optionInMagento->getValue(), $optionStoreLabel->getStoreId());
-                        $message = 'option store label attribute_code: ' . $attributeCode . ' default label: ' . $optionStoreLabel->getDefaultLabel() . ' label: ' . $optionStoreLabel->getLabel() . ' store_id: ' . $optionStoreLabel->getStoreId();
-                        if (!$eavAttributeOptionValue) {
-                            $this->addEavAttributeOptionValue($optionInMagento->getValue(), $optionStoreLabel->getStoreId(), $optionStoreLabel->getLabel());
-                            $this->logger->info('Added ' . $message);
-                        } elseif ($eavAttributeOptionValue['value'] !== $optionStoreLabel->getLabel()){
-                            $this->updateEavAttributeOptionValue($optionInMagento->getValue(), $optionStoreLabel->getStoreId(), $optionStoreLabel->getLabel());
-                            $this->logger->info('Updated ' . $message);
+                try {
+                    foreach ($attribute->getOptions() as $optionInMagento) {
+                        if (trim(strtolower($optionStoreLabel->getDefaultLabel())) === trim(strtolower($optionInMagento->getLabel()))) {
+                            $eavAttributeOptionValue = $this->getEavAttributeOptionValue($optionInMagento->getValue(), $optionStoreLabel->getStoreId());
+                            $message = 'option store label attribute_code: ' . $attributeCode . ' default label: ' . $optionStoreLabel->getDefaultLabel() . ' label: ' . $optionStoreLabel->getLabel() . ' store_id: ' . $optionStoreLabel->getStoreId();
+                            $this->logger->info('DEBUG ' . $message);
+                            if (!$eavAttributeOptionValue) {
+                                $this->addEavAttributeOptionValue($optionInMagento->getValue(), $optionStoreLabel->getStoreId(), $optionStoreLabel->getLabel());
+                                $this->logger->info('Added ' . $message);
+                            } elseif ($eavAttributeOptionValue['value'] !== $optionStoreLabel->getLabel()){
+                                $this->updateEavAttributeOptionValue($optionInMagento->getValue(), $optionStoreLabel->getStoreId(), $optionStoreLabel->getLabel());
+                                $this->logger->info('Updated ' . $message);
+                            }
                         }
                     }
+                } catch (\Throwable $e) {
+                    $message = 'Unable to update store option label. attribute_code: ' . $attributeCode . ' default scope label: ' . $optionStoreLabel->getDefaultLabel() . ' store label: ' . $optionStoreLabel->getLabel();
+                    $this->logger->error($message . ' Error: ' . $e->getMessage() . ' ' . $e->getTraceAsString());
                 }
+
             }
         }
     }
