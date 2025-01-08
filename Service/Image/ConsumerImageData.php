@@ -6,7 +6,7 @@ class ConsumerImageData implements ConsumerImageDataInterface
 {
     private string $productSku;
     private array $consumerImageDataRows = [];
-    private string $downloaderClassName;
+    private string $downloaderClassName = '';
 
     /**
      * @return string
